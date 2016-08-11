@@ -59,9 +59,10 @@ bool Server::started() const
 
 void Server::start()
 {
-    _listen_server.start(_listen_address);
+    auto connect_address = _listen_address;
+    _listen_address = _listen_server.start(connect_address);
 
-    _thread = std::thread([this](){
+    _thread = std::thread([this, connect_address](){
         _listen_server.run(
             [this](io::Connection& connection){
                 if ( accept(connection) )
@@ -86,6 +87,7 @@ void Server::start()
                 return create_connection();
             }
         );
+        _listen_address = connect_address;
     });
 }
 

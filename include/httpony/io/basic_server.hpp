@@ -36,6 +36,10 @@ namespace io {
  */
 struct ListenAddress : public IPAddress
 {
+    ListenAddress(const IPAddress& ip)
+        : IPAddress(ip)
+    {}
+
     ListenAddress(Type type, std::string string, uint16_t port)
         : IPAddress(type, std::move(string), port)
     {}
@@ -61,23 +65,24 @@ public:
      * \note You'll still need to call run() for the server to actually accept
      *       incoming connections
      */
-    void start(const ListenAddress& listen)
+    ListenAddress start(const ListenAddress& listen)
     {
-        boost_tcp::resolver resolver(io_service);
         boost_tcp protocol = listen.type == IPAddress::Type::IPv4 ? boost_tcp::v4() : boost_tcp::v6();
 
         boost_tcp::endpoint endpoint;
         if ( !listen.string.empty() )
+        {
+            boost_tcp::resolver resolver(io_service);
             endpoint = *resolver.resolve({
                 protocol,
                 listen.string,
                 std::to_string(listen.port)
             });
+        }
         else
-            endpoint = *resolver.resolve({
-                protocol,
-                std::to_string(listen.port)
-            });
+        {
+            endpoint = boost_tcp::endpoint(protocol, listen.port);
+        }
 
         acceptor.open(endpoint.protocol());
         acceptor.set_option(boost_tcp::acceptor::reuse_address(true));
@@ -86,6 +91,8 @@ public:
 
         if ( io_service.stopped() )
             io_service.reset();
+
+        return ListenAddress(SocketWrapper::endpoint_to_ip(acceptor.local_endpoint()));
     }
 
     /**
@@ -143,7 +150,6 @@ public:
     {
         return _timeout;
     }
-
 
 private:
     /**

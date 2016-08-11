@@ -27,6 +27,7 @@
 /// \endcond
 
 #include "httpony/http/headers.hpp"
+#include "httpony/ip_address.hpp"
 
 namespace httpony {
 
@@ -244,6 +245,10 @@ private:
  */
 struct Authority
 {
+    Authority(const IPAddress& address)
+        : host(address.string), port(address.port)
+    {}
+
     explicit Authority(const std::string& string);
     Authority() = default;
 

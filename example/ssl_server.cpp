@@ -140,7 +140,7 @@ private:
  */
 int main(int argc, char** argv)
 {
-    uint16_t port = 8083;
+    uint16_t port = 0;
     std::string cert_file = "server.pem";
     std::string key_file = "server.key";
     std::string dh_file;

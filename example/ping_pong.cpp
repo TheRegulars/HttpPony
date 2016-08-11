@@ -150,16 +150,13 @@ protected:
 
 int main(int argc, char** argv)
 {
-    uint16_t port = 8084;
+    uint16_t port = 0;
 
     if ( argc > 1 )
         port = std::stoul(argv[1]);
 
     // This creates a server that listens to both IPv4 and IPv6
     // on the given port
-    httpony::Authority sv_auth;
-    sv_auth.host = "localhost";
-    sv_auth.port = port;
     PingPongServer server(port);
 
     // This starts the server on a separate thread
@@ -167,7 +164,7 @@ int main(int argc, char** argv)
     std::cout << "Server started on port " << server.listen_address().port << "\n";
 
     // This starts the client on a separate thread
-    PingPongClient client(sv_auth);
+    PingPongClient client(server.listen_address());
     client.start();
     std::cout << "Client started\n";
     client.create_request();

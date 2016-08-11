@@ -125,7 +125,6 @@ public:
         return endpoint_to_ip(endpoint);
     }
 
-protected:
     /**
      * \brief Converts a boost endpoint to an IPAddress object
      */

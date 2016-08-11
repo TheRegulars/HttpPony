@@ -182,7 +182,7 @@ private:
 int main(int argc, char** argv)
 {
     std::string path = "/home";
-    uint16_t port = 8082;
+    uint16_t port = 0;
 
     if ( argc > 1 )
         path = argv[1];

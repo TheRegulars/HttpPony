@@ -215,7 +215,7 @@ private:
  */
 int main(int argc, char** argv)
 {
-    uint16_t port = 8081;
+    uint16_t port = 0;
 
     if ( argc > 1 )
         port = std::stoul(argv[1]);
