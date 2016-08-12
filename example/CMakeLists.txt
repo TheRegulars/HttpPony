@@ -51,6 +51,9 @@ if(OPENSSL_FOUND)
 
     example(ssl_client)
     target_link_libraries(ssl_client ${OPENSSL_LIBRARIES})
+
+    example(ssl_ping_pong)
+    target_link_libraries(ssl_ping_pong ${OPENSSL_LIBRARIES})
 else()
     message(STATUS "ssl_server and ssl_client examples disabled (You need OpenSSL for them)")
 endif()
