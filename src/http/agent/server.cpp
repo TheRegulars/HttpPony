@@ -278,10 +278,10 @@ melanolib::Optional<melanolib::time::seconds> Server::timeout() const
     return _listen_server.timeout();
 }
 
-bool Server::send(Response& response) const
+OperationStatus Server::send(Response& response) const
 {
     if ( !response.connection )
-        return false;
+        return "invalid connection";
     auto stream = response.connection.send_stream();
     /// \todo Switch formatter based on protocol
     /// (Needs to implement stuff like HTTP/2)

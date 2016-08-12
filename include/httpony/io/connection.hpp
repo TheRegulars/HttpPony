@@ -158,12 +158,16 @@ public:
         * \note If not called, the data will still be sent but you might not be
         * able to detect whether that has been successful
         */
-    bool send()
+    OperationStatus send()
     {
-        if ( connection && connection.commit_output() )
-            return true;
-        setstate(badbit);
-        return false;
+        OperationStatus status;
+        if ( !connection )
+            status = "invalid connection";
+        else
+            status = connection.commit_output();
+        if ( status.error() )
+            setstate(badbit);
+        return status;
     }
 
 private:

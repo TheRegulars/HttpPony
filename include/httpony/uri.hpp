@@ -247,7 +247,8 @@ struct Authority
 {
     Authority(const IPAddress& address)
         : host(address.string), port(address.port)
-    {}
+    {
+    }
 
     explicit Authority(const std::string& string);
     Authority() = default;

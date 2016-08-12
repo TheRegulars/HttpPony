@@ -96,18 +96,18 @@ protected:
      */
     virtual void error(io::Connection& connection, const OperationStatus& what) const
     {
-        std::cerr << "Error " << connection.remote_address() << ' ' << what << std::endl;
+        std::cerr << "Server error: " << connection.remote_address() << ": " << what << std::endl;
     }
 
-    bool send(Response& response) const;
+    OperationStatus send(httpony::Response& response) const;
 
-    bool send(io::Connection& connection, Response& response) const
+    OperationStatus send(io::Connection& connection, Response& response) const
     {
         response.connection = connection;
         return send(response);
     }
     
-    bool send(io::Connection& connection, Response&& response) const
+    OperationStatus send(io::Connection& connection, Response&& response) const
     {
         return send(connection, response);
     }

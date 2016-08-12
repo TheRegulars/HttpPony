@@ -44,7 +44,6 @@ protected:
         return io::Connection(io::SocketTag<io::PlainSocket>{});
     }
 
-private:
     OperationStatus on_connect(const Uri& target, io::Connection& connection) override
     {
         if ( target.scheme == "https" )

@@ -46,10 +46,11 @@ OperationStatus Client::get_response_attempt(int attempt, Request& request, Resp
         process_request(request);
         auto ostream = request.connection.send_stream();
         http::Http1Formatter().request(ostream, request);
-        if ( !ostream.send() )
+        auto status = ostream.send();
+        if ( status.error() )
         {
             response.clear_data();
-            return "connection error";
+            return status;
         }
     }
 

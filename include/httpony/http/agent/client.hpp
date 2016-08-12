@@ -153,12 +153,12 @@ protected:
 
     OperationStatus get_response_attempt(int attempt, Request& request, Response& response);
     
-private:
     virtual OperationStatus on_connect(const Uri& target, io::Connection& connection)
     {
         return {};
     }
 
+private:
     template<class ClientT>
         friend class BasicAsyncClient;
 
@@ -256,6 +256,7 @@ public:
         basic_client().async_connect(item.url, item.connection,
             [this, on_response, on_connect, on_error, &item]()
             {
+                this->on_connect(item.url, item.connection);
                 melanolib::callback(on_connect, item);
                 Response response;
                 /// \todo get_response is not async
