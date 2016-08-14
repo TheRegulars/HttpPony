@@ -41,8 +41,7 @@ public:
         boost_ssl::context& context
     )
         : socket(io_service, context)
-    {
-    }
+    {}
 
     OperationStatus close() override
     {
@@ -86,9 +85,20 @@ public:
         return io::error_to_status(error);
     }
 
+    httpony::OperationStatus set_verify_mode(bool verify)
+    {
+        boost::system::error_code error;
+        socket.set_verify_mode(
+            verify ?
+            boost_ssl::verify_peer | boost_ssl::verify_fail_if_no_peer_cert :
+            boost_ssl::verify_none,
+            error
+        );
+        return io::error_to_status(error);
+    }
+
 private:
     ssl_socket_type socket;
-
 };
 
 } // namespace ssl

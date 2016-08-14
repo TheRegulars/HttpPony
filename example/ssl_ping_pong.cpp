@@ -182,6 +182,8 @@ int main(int argc, char** argv)
 
     // This starts the client on a separate thread
     PingPongClient client(server.listen_address());
+    client.load_cert_authority(cert_file);
+    client.set_verify_mode(true);
     client.start();
     std::cout << "Client started\n";
     client.create_request();

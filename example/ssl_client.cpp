@@ -34,6 +34,7 @@ int main(int argc, char** argv)
         url = "https://example.com";
 
     httpony::ssl::SslClient client;
+    client.set_verify_mode(true);
 
     httpony::Response response;
     httpony::Request request("GET", url);
