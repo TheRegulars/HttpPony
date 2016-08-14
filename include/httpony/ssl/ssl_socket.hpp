@@ -76,6 +76,16 @@ public:
         boost::asio::async_write(socket, buffer, callback);
     }
 
+    httpony::OperationStatus handshake(bool client)
+    {
+        boost::system::error_code error;
+        socket.handshake(
+            client ? boost_ssl::stream_base::client : boost_ssl::stream_base::server,
+            error
+        );
+        return io::error_to_status(error);
+    }
+
 private:
     ssl_socket_type socket;
 

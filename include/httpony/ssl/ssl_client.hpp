@@ -50,10 +50,8 @@ protected:
         {
             /// \todo dynamic_cast? create_connection() might be best to not be final here
             SslSocket& socket = static_cast<SslSocket&>(connection.socket().socket_wrapper());
-            boost::system::error_code error;
             /// \todo Async handshake
-            socket.ssl_socket().handshake(boost_ssl::stream_base::server, error);
-            return io::error_to_status(error);
+            return socket.handshake(true);
         }
 
         return {};

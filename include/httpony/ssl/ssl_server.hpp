@@ -76,13 +76,12 @@ private:
     {
         SslSocket& socket = socket_cast(connection.socket());
 
-        boost::system::error_code error;
-        socket.ssl_socket().handshake(boost_ssl::stream_base::server, error);
+        auto status = socket.handshake(false);
 
-        if ( error )
-            this->error(connection, error.message());
+        if ( status.error() )
+            error(connection, status);
 
-        return io::error_to_status(error);
+        return status;
     }
 
     /**
