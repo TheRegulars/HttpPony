@@ -71,10 +71,27 @@ public:
 
     /**
      * \brief Maximum size of a request body to be accepted
+     *
+     * If the header area is too large, the suggested response will be 400
+     * (Bad Request).
+     * If the header sdection is fine but the content length of the payload is
+     * too long, the suggested response will be 413 (Payload Too Large).
+     *
+     * If you want to restrict only the payload, leave this to unlimited and
+     * check the content_length of the request body.
+     *
+     * \see set_ulimited_request_size(), max_request_size()
      */
-    std::size_t max_request_body() const;
+    void set_max_request_size(std::size_t size);
 
-    void set_max_request_body(std::size_t size);
+    /**
+     * \brief Removes max request limits (this is the default)
+     * \see set_max_request_size(), max_request_size()
+     */
+    void set_ulimited_request_size();
+
+    std::size_t max_request_size() const;
+
 
     /**
      * \brief Function handling requests
@@ -144,7 +161,7 @@ private:
 
     io::ListenAddress _listen_address;
     io::BasicServer _listen_server;
-    std::size_t _max_request_body;
+    std::size_t _max_request_size = io::NetworkInputBuffer::unlimited_input();
     std::thread _thread;
 };
 

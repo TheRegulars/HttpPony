@@ -33,6 +33,7 @@ public:
         : Server(listen)
     {
         set_timeout(melanolib::time::seconds(16));
+        set_max_request_size(1024);
     }
 
     void respond(httpony::Request& request, const httpony::Status& status) override
@@ -66,10 +67,6 @@ private:
         std::string& output
     ) const
     {
-        // Discard requests with a too long of a payload
-        if ( request.body.content_length() > max_size )
-            return httpony::StatusCode::PayloadTooLarge;
-
         // Handle HTTP/1.1 requests with an Expect: 100-continue header
         if ( status == httpony::StatusCode::Continue )
         {
@@ -211,7 +208,6 @@ private:
 
 
     std::string log_format = "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"";
-    std::size_t max_size = 8192;
 };
 
 /**

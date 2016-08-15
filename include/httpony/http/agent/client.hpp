@@ -122,6 +122,28 @@ public:
         return _max_redirects;
     }
 
+    std::size_t max_response_size() const
+    {
+        return _max_response_size;
+    }
+
+    /**
+     * \brief Maximum response size
+     *
+     * The client will stop parsing any response larger than this.
+     * (Defaults to unlimited).
+     *
+     * \see set_ulimited_response_size(), max_response_size()
+     */
+    void set_max_response_size(std::size_t size)
+    {
+        _max_response_size = size;
+    }
+
+    void set_ulimited_response_size()
+    {
+        set_max_response_size(io::NetworkInputBuffer::unlimited_input());
+    }
 
 protected:
     /**
@@ -165,6 +187,7 @@ private:
     io::BasicClient _basic_client;
     UserAgent _user_agent;
     int _max_redirects = 0;
+    std::size_t _max_response_size = io::NetworkInputBuffer::unlimited_input();
 };
 
 template<class ClientT>

@@ -56,13 +56,15 @@ public:
 
         auto read_size = _socket.read_some(in_buffer, status);
 
+        _total_read_size += read_size;
+
         commit(read_size);
 
         return read_size + prev_size;
     }
 
     /**
-     * \brief Expect at least \p byte_count to be available in the socket
+     * \brief Expect at least \p byte_count to be available in the socket.
      */
     void expect_input(std::size_t byte_count)
     {
@@ -70,6 +72,20 @@ public:
             _expected_input = byte_count - size();
         else
             _expected_input = 0;
+    }
+
+    /**
+     * \brief Expect an unspecified of bytes
+     *
+     * This will cause to perform chunked reads of unlimited_input() bytes
+     * during underflows.
+     *
+     * Once the remote endpoint fails to deliver enough bytes,
+     * it is handled as the end of the stream (ie: expect_input(0))
+     */
+    void expect_unlimited_input()
+    {
+        _expected_input = unlimited_input();
     }
 
     std::size_t expected_input() const
@@ -95,6 +111,25 @@ public:
     static constexpr std::size_t chunk_size()
     {
         return 1024;
+    }
+
+    /**
+     * \brief Number of bytes read from the source from this buffer
+     */
+    std::size_t total_read_size() const
+    {
+        return _total_read_size;
+    }
+
+    /**
+     * \brief Number of bytes expected to have been read once all of the
+     * expected input has been read.
+     */
+    std::size_t total_expected_size() const
+    {
+        if ( _expected_input == unlimited_input() )
+            return unlimited_input();
+        return _total_read_size + _expected_input;
     }
 
 protected:
@@ -132,6 +167,7 @@ private:
     TimeoutSocket& _socket;
     std::size_t _expected_input = 0;
     OperationStatus _status;
+    std::size_t _total_read_size = 0;
 };
 
 using NetworkOutputBuffer = boost::asio::streambuf;

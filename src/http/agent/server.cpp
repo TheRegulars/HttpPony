@@ -42,14 +42,19 @@ io::ListenAddress Server::listen_address() const
     return _listen_address;
 }
 
-std::size_t Server::max_request_body() const
+std::size_t Server::max_request_size() const
 {
-    return _max_request_body;
+    return _max_request_size;
 }
 
-void Server::set_max_request_body(std::size_t size)
+void Server::set_max_request_size(std::size_t size)
 {
-    _max_request_body = size;
+    _max_request_size = size;
+}
+
+void Server::set_ulimited_request_size()
+{
+    set_max_request_size(io::NetworkInputBuffer::unlimited_input());
 }
 
 bool Server::started() const
@@ -68,18 +73,27 @@ void Server::start()
                 if ( accept(connection) )
                 {
                     /// \todo Switch parser based on protocol
-                    Http1Parser parser;
-                    connection.input_buffer().expect_input(
-                        io::NetworkInputBuffer::unlimited_input()
-                    );
+                    connection.input_buffer().expect_input(_max_request_size);
+
                     auto stream = connection.receive_stream();
                     Request request;
+                    Http1Parser parser;
                     auto status = parser.request(stream, request);
                     connection.input_buffer().expect_input(0);
+
                     if ( stream.timed_out() )
+                    {
                         status = StatusCode::RequestTimeout;
+                    }
                     else if ( request.body.has_data() )
+                    {
                         connection.input_buffer().expect_input(request.body.content_length());
+                        if ( connection.input_buffer().total_expected_size() > _max_request_size )
+                        {
+                            status = httpony::StatusCode::PayloadTooLarge;
+                        }
+                    }
+
                     request.connection = connection;
                     respond(request, status);
                 }
