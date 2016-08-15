@@ -100,7 +100,7 @@ private:
     {
         try
         {
-            if ( request.url.path.string() == "admin" )
+            if ( request.uri.path.string() == "admin" )
                 return check_auth(request);
 
             httpony::Response response(request.protocol);

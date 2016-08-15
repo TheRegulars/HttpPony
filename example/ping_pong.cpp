@@ -56,7 +56,7 @@ protected:
             if ( request.method != "GET"  && request.method != "HEAD")
                 return simple_response(httpony::StatusCode::MethodNotAllowed, request.protocol);
 
-            if ( request.url.path.string() != "/ping" )
+            if ( request.uri.path.string() != "/ping" )
                 return simple_response(httpony::StatusCode::NotFound, request.protocol);
 
             httpony::Response response(request.protocol);
@@ -135,7 +135,7 @@ protected:
 
     void on_error(httpony::Request& request, const httpony::OperationStatus& status) override
     {
-        std::cerr << "Error accessing " << request.url.full() << ": " << status.message() << std::endl;
+        std::cerr << "Error accessing " << request.uri.full() << ": " << status.message() << std::endl;
     }
 
     void on_response(httpony::Request& request, httpony::Response& response) override

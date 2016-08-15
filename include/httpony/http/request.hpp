@@ -55,7 +55,7 @@ struct Request
 
     Request(std::string method, const Uri& uri, Protocol protocol = Protocol::http_1_1)
         : method(std::move(method)),
-          url(std::move(uri)),
+          uri(std::move(uri)),
           protocol(std::move(protocol))
     {}
 
@@ -67,7 +67,7 @@ struct Request
     void clear_data()
     {
         method = {};
-        url = {};
+        uri = {};
         protocol = Protocol::http_1_1;
         headers.clear();
         cookies.clear();
@@ -78,7 +78,7 @@ struct Request
     }
 
     std::string method;
-    Uri         url;
+    Uri         uri;
     Protocol    protocol = Protocol::http_1_1;
     Headers     headers;
     DataMap     cookies;

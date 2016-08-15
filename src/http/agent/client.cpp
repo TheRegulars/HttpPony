@@ -91,13 +91,13 @@ OperationStatus Client::on_attempt(Request& request, Response& response, int att
         Uri target = response.headers["Location"];
         if ( target.authority.empty() )
         {
-            target.authority = request.url.authority;
+            target.authority = request.uri.authority;
         }
         /// \todo Implement keeping the connection open on the server side
         if ( response.headers["Connection"] == "close" ||
              !request.connection.connected() ||
-             request.url.authority.host != target.authority.host ||
-             request.url.authority.port != target.authority.port )
+             request.uri.authority.host != target.authority.host ||
+             request.uri.authority.port != target.authority.port )
         {
             OperationStatus status;
             request.connection = connect(target, status);
@@ -105,7 +105,7 @@ OperationStatus Client::on_attempt(Request& request, Response& response, int att
                 return status;
         }
 
-        request.url = target;
+        request.uri = target;
         /// \todo Handle 307 differently (keeping POST)
         if ( request.method == "POST" )
             request.method = "GET";

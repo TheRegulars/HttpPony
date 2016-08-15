@@ -145,8 +145,8 @@ private:
 
     void request_line(std::ostream& stream, Request& request) const
     {
-        stream << request.method << ' ' << request.url.path.url_encoded(true)
-               << request.url.query_string(true) << ' ' << request.protocol << endl;
+        stream << request.method << ' ' << request.uri.path.url_encoded(true)
+               << request.uri.query_string(true) << ' ' << request.protocol << endl;
     }
 
 
@@ -248,7 +248,7 @@ private:
         headers(stream, request.headers);
 
         if ( !request.headers.contains("Host") )
-            header(stream, "Host", request.url.authority.host);
+            header(stream, "Host", request.uri.authority.host);
 
         if ( !request.user_agent.empty() && !request.headers.contains("User-Agent") )
             header(stream, "User-Agent", request.user_agent);

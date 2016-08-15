@@ -53,7 +53,7 @@ protected:
             if ( status.is_error() )
                 return simple_response(status, request.protocol);
 
-            if ( request.url.path.string() == "/login" )
+            if ( request.uri.path.string() == "/login" )
             {
                 if ( request.method == "POST" )
                 {
@@ -86,11 +86,11 @@ protected:
                 return response;
             }
 
-            if ( request.url.path.empty() || request.url.path.front() != "admin" )
-                return httpony::Response::redirect("/admin"+request.url.path.string());
+            if ( request.uri.path.empty() || request.uri.path.front() != "admin" )
+                return httpony::Response::redirect("/admin"+request.uri.path.string());
 
             if ( !request.cookies.contains("logged_in") )
-                return httpony::Response::redirect("/login?next="+request.url.full());
+                return httpony::Response::redirect("/login?next="+request.uri.full());
 
             httpony::Response response(request.protocol);
             response.body.start_output("text/html");
@@ -177,7 +177,7 @@ protected:
         // Set request cookies
         for ( const auto& cookie : cookies )
         {
-            if ( cookie.second.matches_uri(request.url) )
+            if ( cookie.second.matches_uri(request.uri) )
                 request.cookies[cookie.first] = cookie.second.value;
         }
     }
@@ -191,7 +191,7 @@ protected:
 
         for ( const auto& cookie : response.cookies )
         {
-            if ( cookie.second.matches_domain(request.url.authority.host) )
+            if ( cookie.second.matches_domain(request.uri.authority.host) )
                 cookies.append(cookie.first, cookie.second);
         }
     }
@@ -199,14 +199,14 @@ protected:
 private:
     void on_error(httpony::Request& request, const httpony::OperationStatus& status) override
     {
-        std::cerr << "Error accessing " << request.url.full() << ": " << status.message() << std::endl;
+        std::cerr << "Error accessing " << request.uri.full() << ": " << status.message() << std::endl;
     }
 
     void on_response(httpony::Request& request, httpony::Response& response) override
     {
         if ( response.headers.contains("X-Login-Page") )
         {
-            httpony::Request login_request("POST", request.url);
+            httpony::Request login_request("POST", request.uri);
             login_request.post["username"] = "admin";
             login_request.post["password"] = "secret";
             async_query(std::move(login_request));

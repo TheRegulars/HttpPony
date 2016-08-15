@@ -261,8 +261,8 @@ bool Http1Parser::request_line(std::istream& stream, Request& request) const
 {
     std::string uri;
     stream >> request.method >> uri >> request.protocol;
-    request.url = uri;
-    request.get = request.url.query;
+    request.uri = uri;
+    request.get = request.uri.query;
     skip_line(stream);
 
     return request.protocol.valid() && stream;

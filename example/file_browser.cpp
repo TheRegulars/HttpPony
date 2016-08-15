@@ -66,7 +66,7 @@ protected:
 
 
             auto file = root;
-            for ( const auto & dir : request.url.path )
+            for ( const auto & dir : request.uri.path )
                 file /= dir;
 
             if ( boost::filesystem::is_directory(file) )
@@ -77,7 +77,7 @@ protected:
                 HtmlDocument html(file.string());
                 auto& list = html.body().append(List{});
 
-                if ( !request.url.path.empty() )
+                if ( !request.uri.path.empty() )
                 {
                     list.add_item(Link{"..", "Parent"});
                 }
@@ -86,7 +86,7 @@ protected:
                 {
                     std::string basename = item.path().filename().string();
                     list.add_item(Link{
-                        (request.url.path / basename).url_encoded(),
+                        (request.uri.path / basename).url_encoded(),
                         basename
                     });
                 }

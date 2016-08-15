@@ -71,7 +71,7 @@ public:
     OperationStatus query(Request& request, Response& response)
     {
         OperationStatus status;
-        auto connection = connect(request.url, status);
+        auto connection = connect(request.uri, status);
 
         if ( status.error() )
             return status;
@@ -269,17 +269,17 @@ public:
             const OnConnect& on_connect,
             const OnError& on_error)
     {
-        request.connection = ClientT::create_connection(request.url);
+        request.connection = ClientT::create_connection(request.uri);
 
         std::unique_lock<std::mutex> lock(mutex);
         items.emplace_back(std::move(request));
         auto& item = items.back();
         lock.unlock();
 
-        basic_client().async_connect(item.url, item.connection,
+        basic_client().async_connect(item.uri, item.connection,
             [this, on_response, on_connect, on_error, &item]()
             {
-                this->on_connect(item.url, item.connection);
+                this->on_connect(item.uri, item.connection);
                 melanolib::callback(on_connect, item);
                 Response response;
                 /// \todo get_response is not async

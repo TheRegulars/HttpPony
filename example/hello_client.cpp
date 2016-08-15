@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     if ( status )
         print_response(response);
     else
-        std::cerr << "Error accessing " << request.url.full() << ": " << status.message() << std::endl;
+        std::cerr << "Error accessing " << request.uri.full() << ": " << status.message() << std::endl;
 
     return 0;
 }

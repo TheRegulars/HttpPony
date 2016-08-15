@@ -191,10 +191,10 @@ void Server::process_log_format(
             // TODO ?
             break;
         case 'q': // The query string (prepended with a ? if a query string exists, otherwise an empty string)
-            output << request.url.query_string(true);
+            output << request.uri.query_string(true);
             break;
         case 'r': // First line of request
-            output << request.method << ' ' << request.url.full() << ' ' << request.protocol;
+            output << request.method << ' ' << request.uri.full() << ' ' << request.protocol;
             break;
         case 'R': // The handler generating the response (if any).
             // TODO ?
@@ -221,7 +221,7 @@ void Server::process_log_format(
             output << request.auth.user;
             break;
         case 'U': // The URL path requested, not including any query string.
-            output << request.url.path.url_encoded();
+            output << request.uri.path.url_encoded();
             break;
         case 'v': // The canonical ServerName of the server serving the request.
             // TODO ?

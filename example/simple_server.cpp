@@ -58,7 +58,7 @@ protected:
             if ( request.method != "GET" && request.method != "HEAD")
                 return simple_response(httpony::StatusCode::MethodNotAllowed, request.protocol);
 
-            if ( !request.url.path.empty() )
+            if ( !request.uri.path.empty() )
                 return simple_response(httpony::StatusCode::NotFound, request.protocol);
 
             httpony::Response response(request.protocol);
