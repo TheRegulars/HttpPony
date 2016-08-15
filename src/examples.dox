@@ -1,16 +1,9 @@
 /**
- * \example example/simple_server.cpp
- * This example shows a very simple server implementation.
+ * \example example/client_server.cpp
+ * A more complex example with a client end server performing various actions
+ * to get to a final page.
  *
- * The created server only supports GET and HEAD methods.
- *
- * It returns "Hello, World" in plain text for successful requests and an
- * appropriate error response if the request could not be handled.
- */
-/**
- * \example example/hello_server.cpp
- * A more complex server example that reads the request payload and logs some
- * of the data in the request object to standard output.
+ * This shows an example of redirects, cookies and POST requests.
  */
 /**
  * \example example/file_browser.cpp
@@ -22,16 +15,17 @@
  * \note It requires libmagic and boost::filesystem.
  */
 /**
- * \example example/ssl_server.cpp
- * Similar to \ref example/simple_server.cpp but implementing HTTPS (HTTP over SSL)
- *
- * \note It requires OpenSSL
- */
-/**
  * \example example/hello_client.cpp
- * This example demonstrates very simple usage of a synchronous client.
+ * A very simple synchronous client that just displays the response of a remote
+ * server after sending a simple GET request.
  *
  * It performs an HTTP request and prints the response to stdout.
+ */
+/**
+ * \example example/hello_server.cpp
+ * Slightly more complex than \ref example/simple_server.cpp,
+ * reads the request payload and logs some of the data in the request object
+ * to standard output.
  */
 /**
  * \example example/ping_pong.cpp
@@ -39,4 +33,38 @@
  * where the client sends requests to the server at regular intervals.
  *
  * The server logs incoming requests and the client logs received responses.
+ */
+/**
+ * \example example/server_upload.cpp
+ * Similar to \ref example/hello_server.cpp but designed to show how
+ * file data is being handled when parsing the request payload.
+ */
+/**
+ * \example example/simple_server.cpp
+ * This example shows a very simple server implementation.
+ *
+ * The created server only supports GET and HEAD methods.
+ *
+ * It returns "Hello, World" in plain text for successful requests and an
+ * appropriate error response if the request could not be handled.
+ */
+/**
+ * \example example/ssl_client.cpp
+ * Similar to \ref example/hello_client.cpp but implementing HTTPS (HTTP over SSL)
+ *
+ * \note It requires OpenSSL
+ */
+/**
+ * \example example/ssl_ping_pong.cpp
+ * Similar to \ref example/ping_pong.cpp but implementing HTTPS (HTTP over SSL)
+ *
+ * Loads a self-signed certificate on the client to verify the server.
+ *
+ * \note It requires OpenSSL
+ */
+/**
+ * \example example/ssl_server.cpp
+ * Similar to \ref example/simple_server.cpp but implementing HTTPS (HTTP over SSL)
+ *
+ * \note It requires OpenSSL
  */

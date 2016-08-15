@@ -6,6 +6,7 @@ A modern C++ HTTP library
 
 Features
 --------
+
 * HTTP/1.x
 * Optional SSL/HTTPS support (Requires to link against OpenSSL)
 * Threaded server implementation
@@ -41,6 +42,9 @@ Dependencies
 * [Melanolib](https://github.com/mbasaglia/Melanolib) (Included as a sub-module)
 * [Boost ASIO](http://boost.org)
 
+If you want to use the SSL capabilties, you need to be able to link OpenSSL to
+the final executable (This is not needed to compile HttPony).
+
 
 Building
 --------
@@ -53,8 +57,8 @@ Examples
 See example/ for example files, src/examples.dox for an explanation of those
 examples.
 
-You can also build the doxygen documentation with
+You can also build the Doxygen documentation with
 
     make doc
 
-Which, of course, requires doxygen to be installed.
+Which, of course, requires Doxygen to be installed.
