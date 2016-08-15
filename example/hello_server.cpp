@@ -72,7 +72,10 @@ private:
 
         // Handle HTTP/1.1 requests with an Expect: 100-continue header
         if ( status == httpony::StatusCode::Continue )
-            send(request.connection, simple_response(status, request.protocol));
+        {
+            auto response_100 = simple_response(status, request.protocol);
+            send_response(request, response_100, false);
+        }
 
         // Parse form data
         if ( request.can_parse_post() )
@@ -152,10 +155,12 @@ private:
      * \brief Sends the response back to the client
      */
     void send_response(httpony::Request& request,
-                       httpony::Response& response) const
+                       httpony::Response& response,
+                       bool final_response = true
+                      ) const
     {
         // We are not going to keep the connection open
-        if ( response.protocol >= httpony::Protocol::http_1_1 )
+        if ( final_response && response.protocol >= httpony::Protocol::http_1_1 )
         {
             response.headers["Connection"] = "close";
         }
