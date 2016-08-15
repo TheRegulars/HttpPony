@@ -69,9 +69,13 @@ void Server::start()
                 {
                     /// \todo Switch parser based on protocol
                     Http1Parser parser;
+                    connection.input_buffer().expect_input(
+                        io::NetworkInputBuffer::unlimited_input()
+                    );
                     auto stream = connection.receive_stream();
                     Request request;
                     auto status = parser.request(stream, request);
+                    connection.input_buffer().expect_input(0);
                     if ( stream.timed_out() )
                         status = StatusCode::RequestTimeout;
                     else if ( request.body.has_data() )

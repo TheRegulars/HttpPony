@@ -21,6 +21,10 @@
 #ifndef HTTPONY_IO_BUFFER_HPP
 #define HTTPONY_IO_BUFFER_HPP
 
+/// \cond
+#include <limits>
+/// \endcond
+
 #include "httpony/io/socket.hpp"
 
 namespace httpony {
@@ -83,19 +87,40 @@ public:
         return _status.error();
     }
 
+    static constexpr std::size_t unlimited_input()
+    {
+        return std::numeric_limits<std::size_t>::max();
+    }
+
+    static constexpr std::size_t chunk_size()
+    {
+        return 1024;
+    }
+
 protected:
     int_type underflow() override
     {
         int_type ret = boost::asio::streambuf::underflow();
         if ( ret == traits_type::eof() && _expected_input > 0 )
         {
-            auto read_size = read_some(_expected_input, _status);
+            auto request_size = _expected_input == unlimited_input() ?
+                chunk_size() : _expected_input;
 
-            if ( read_size <= _expected_input )
-                _expected_input -= read_size;
+            auto read_size = read_some(request_size, _status);
+
+            if ( _expected_input == unlimited_input() )
+            {
+                if ( read_size <= request_size )
+                    _expected_input = 0;
+            }
             else
-                /// \todo This should trigger a bad request
-                _status = "unexpected data in the stream";
+            {
+                if ( read_size <= _expected_input )
+                    _expected_input -= read_size;
+                else
+                    /// \todo This should trigger a bad request
+                    _status = "unexpected data in the stream";
+            }
 
             ret = boost::asio::streambuf::underflow();
         }

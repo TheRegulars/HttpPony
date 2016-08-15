@@ -217,13 +217,7 @@ private:
     ReceiveStream(Connection connection)
         : std::istream(&connection.input_buffer()),
             connection(std::move(connection))
-    {
-        OperationStatus _status;
-        /// \todo Avoid magic number, keep reading if needed
-        auto sz = this->connection.data->input_buffer.read_some(1024, _status);
-        if ( _status.error() || sz <= 0 )
-            setstate(badbit);
-    }
+    {}
 
     friend Connection;
     Connection connection;

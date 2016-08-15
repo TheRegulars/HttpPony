@@ -55,6 +55,9 @@ OperationStatus Client::get_response_attempt(int attempt, Request& request, Resp
     }
 
     {
+        request.connection.input_buffer().expect_input(
+            io::NetworkInputBuffer::unlimited_input()
+        );
         auto istream = request.connection.receive_stream();
         OperationStatus status = Http1Parser().response(istream, response);
         response.connection = request.connection;
@@ -66,8 +69,11 @@ OperationStatus Client::get_response_attempt(int attempt, Request& request, Resp
             return status;
     }
 
-    if ( response.body.has_data() )
-        response.connection.input_buffer().expect_input(response.body.content_length());
+    response.connection.input_buffer().expect_input(
+        response.body.has_data() ?
+        response.body.content_length() :
+        0
+    );
 
     process_response(request, response);
 
