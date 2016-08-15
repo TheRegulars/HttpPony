@@ -55,11 +55,30 @@ private:
         for ( const auto& part : form_data.parts )
         {
             CompoundHeader disposition;
-            if ( !parser.compound_header(part.headers.get("content-disposition"), disposition) )
+
+            if ( !parser.compound_header(part.headers.get("Content-Disposition"), disposition) )
                 return false;
+
             if ( disposition.value != "form-data" || !disposition.parameters.contains("name") )
                 return false;
-            request.post.append(disposition.parameters["name"], part.content);
+
+            if ( !disposition.parameters.contains("filename") )
+            {
+                request.post.append(disposition.parameters["name"], part.content);
+            }
+            else
+            {
+                RequestFile file{
+                    disposition.parameters["filename"],
+                    part.headers.get("Content-Type", "text/plain"),
+                    part.headers,
+                    part.content,
+                };
+                file.headers.erase("Content-Type");
+                file.headers.erase("Content-Disposition");
+
+                request.files.append(disposition.parameters["name"], file);
+            }
         }
 
         return true;
@@ -90,6 +109,21 @@ private:
                 {{"Content-Disposition", formatter.compound_header(disposition)}},
                 item.second
             });
+        }
+
+        for ( const auto& item: request.files )
+        {
+
+            Headers part_headers = item.second.headers;
+            if ( !part_headers.contains("Content-Type") && item.second.content_type.valid() )
+                part_headers["Content-Type"] = item.second.content_type.string();
+
+            part_headers["Content-Disposition"] = formatter.compound_header({
+                "form-data",
+                {{"name", item.first}, {"filename", item.second.filename}}
+            });
+
+            form_data.parts.push_back({part_headers, item.second.contents});
         }
 
         formatter.multipart(request.body, form_data);

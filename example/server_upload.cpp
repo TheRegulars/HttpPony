@@ -26,45 +26,36 @@
  * This server logs the contents of incoming requests to stdout and
  * returns simple "Hello World" responses to the client
  */
-class MyServer : public httpony::Server
+class ServerUpload : public httpony::Server
 {
 public:
-    explicit MyServer(httpony::io::ListenAddress listen)
+    explicit ServerUpload(httpony::io::ListenAddress listen)
         : Server(listen)
     {
         set_timeout(melanolib::time::seconds(16));
-        set_max_request_size(1024);
+    }
+
+    ~ServerUpload()
+    {
+        std::cout << "Server stopped\n";
     }
 
     void respond(httpony::Request& request, const httpony::Status& status) override
     {
-        httpony::Response response;
-        std::string body;
-        if ( status.is_error() )
-        {
-            response = simple_response(status, request.protocol);
-        }
-        else
-        {
-            auto body_status = get_body(request, status, body);
-            if ( body_status.is_error() )
-                response = simple_response(body_status, request.protocol);
-            else
-                response = build_response(request);
-        }
+        httpony::Response response = build_response(request, status);
+
         send_response(request, response);
 
-        print_info(request, response, body);
+        print_info(request, response);
     }
 
 private:
     /**
-     * \brief Returns the whole request body as a string
+     * \brief Parses the request payload
      */
-    httpony::Status get_body(
+    httpony::Status parse_body(
         httpony::Request& request,
-        const httpony::Status& status,
-        std::string& output
+        const httpony::Status& status
     ) const
     {
         // Handle HTTP/1.1 requests with an Expect: 100-continue header
@@ -80,14 +71,9 @@ private:
             if ( !request.parse_post() )
                 return httpony::StatusCode::BadRequest;
         }
-        // Check if we have something to read
-        else if ( request.body.has_data() )
+        else
         {
-            output = request.body.read_all();
-
-            // Handle read errors (eg: wrong Content-Length)
-            if ( request.body.has_error() )
-                return httpony::StatusCode::BadRequest;
+            return httpony::StatusCode::BadRequest;
         }
 
         return httpony::StatusCode::OK;
@@ -96,16 +82,51 @@ private:
     /**
      * \brief Returns a response for the given request
      */
-    httpony::Response build_response(httpony::Request& request) const
+    httpony::Response build_response(
+        httpony::Request& request,
+        httpony::Status status
+    ) const
     {
         try
         {
-            if ( request.uri.path.string() == "admin" )
-                return check_auth(request);
+            if ( status.is_error() )
+                return simple_response(status, request.protocol);
+
+            if ( !request.uri.path.empty() )
+                return simple_response(httpony::StatusCode::NotFound, request.protocol);
 
             httpony::Response response(request.protocol);
-            response.body.start_output("text/plain");
-            response.body << "Hello world!\r\n";
+            response.body.start_output("text/html");
+
+            if ( request.method == "POST" || request.method == "PUT" )
+            {
+                status = parse_body(request, status);
+                if ( status.is_error() )
+                    return simple_response(status, request.protocol);
+            }
+
+            using namespace httpony::quick_xml::html;
+            using namespace httpony::quick_xml;
+            HtmlDocument html("Upload");
+            html.body().append(
+                Element{"form",
+                    Attributes{
+                        {"method", "post"},
+                        {"enctype", "multipart/form-data"},
+                    },
+                    Element{"p",
+                        Label("filename", "File Name"),
+                        Input("filename", "text")},
+                    Element{"p",
+                        Label("contents", "Contents"),
+                        Input("contents", "file")},
+                    Element{"p",
+                        Input("submit", "submit", "Submit")},
+                }
+            );
+
+            response.body << html;
+
             return response;
         }
         catch ( const std::exception& )
@@ -126,25 +147,6 @@ private:
         httpony::Response response(status, protocol);
         response.body.start_output("text/plain");
         response.body << response.status.message << '\n';
-        return response;
-    }
-
-    /**
-     * \brief Requires the user to be HTTP-authenticated and sends an appropriate reply
-     */
-    httpony::Response check_auth(httpony::Request& request) const
-    {
-        if ( request.auth.user == "admin" && request.auth.password == "password" )
-        {
-            httpony::Response response(request.protocol);
-            response.body.start_output("text/plain");
-            response.body << "Hello admin!\r\n";
-            return response;
-        }
-
-        auto response = httpony::Response::authorization_required({{"Basic", "Admin area"}});
-        response.body.start_output("text/plain");
-        response.body << "You need to be an admin!\r\n";
         return response;
     }
 
@@ -187,22 +189,22 @@ private:
     /**
      * \brief Logs info on the current request/response
      */
-    void print_info(const httpony::Request& request,
-                    const httpony::Response& response,
-                    std::string& body) const
+    void print_info(httpony::Request& request,
+                    const httpony::Response& response) const
     {
         std::cout << '\n';
         log_response(log_format, request, response, std::cout);
 
         show_headers("Headers", request.headers);
-        show_headers("Cookies", request.cookies);
-        show_headers("Get", request.get);
         show_headers("Post", request.post);
 
-        if ( request.body.has_data() )
+        std::cout << "Files:\n";
+        for ( const auto& item : request.files )
         {
+            show_headers("  " + item.first, item.second.headers);
+            std::string body = item.second.contents;
             std::replace_if(body.begin(), body.end(), [](char c){return c < ' ' && c != '\n';}, ' ');
-            std::cout << '\n' << body << '\n';
+            std::cout << body << "\n\n";
         }
     }
 
@@ -223,16 +225,15 @@ int main(int argc, char** argv)
 
     // This creates a server that listens to both IPv4 and IPv6
     // on the given port
-    MyServer server(port);
+    ServerUpload server(port);
 
     // This starts the server on a separate thread
     server.start();
 
     std::cout << "Server started on port "<< server.listen_address().port << ", hit enter to quit\n";
-    // Pause the main thread listening to standard input
+    // Pause the main thread by listening to standard input
     std::cin.get();
-    std::cout << "Server stopped\n";
 
-    // The MyServer destructor will stop the server and join the thread
+    // The server destructor will stop the server and join the thread
     return 0;
 }

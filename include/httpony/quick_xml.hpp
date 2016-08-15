@@ -517,14 +517,19 @@ public:
 class Input : public Element
 {
 public:
-    Input(const std::string& name, std::string type, std::string value)
+    template<class... Args>
+    Input(const std::string& name, std::string type, std::string value = {}, Args&&... args)
         : Element(
             "input",
-            Attribute{"name", name},
-            Attribute{"id", name},
-            Attribute{"type", std::move(type)}
+            Attribute{"type", std::move(type)},
+            std::forward<Args>(args)...
         )
     {
+        if ( !name.empty() )
+        {
+            append(Attribute{"name", name});
+            append(Attribute{"id", name});
+        }
         _value = &append(Attribute{"value", std::move(value)});
     }
 

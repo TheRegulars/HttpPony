@@ -45,6 +45,13 @@ struct Auth
     Headers     parameters;
 };
 
+struct RequestFile
+{
+    std::string filename;
+    MimeType content_type;
+    Headers headers;
+    std::string contents;
+};
 
 /**
  * \brief HTTP request data
@@ -84,6 +91,7 @@ struct Request
     DataMap     cookies;
     DataMap     get;
     DataMap     post;
+    melanolib::OrderedMultimap<std::string, RequestFile> files;
     Auth        auth;
     UserAgent   user_agent;
 

@@ -41,10 +41,9 @@ private:
         return true;
     }
 
-    /// \todo Once files are supported this shall return false for requests that have file data
     bool do_can_format(const Request& request) const override
     {
-        return true;
+        return request.files.empty();
     }
 
 

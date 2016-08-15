@@ -31,6 +31,7 @@ example(hello_client)
 example(ping_pong)
 example(simple_server)
 example(client_server)
+example(server_upload)
 
 set(Boot_FOUND ON)
 set(Magic_FOUND ON)

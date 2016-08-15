@@ -79,6 +79,7 @@ protected:
                         Input("username", "text", request.post["username"]),
                         Label("password", "Password"),
                         Input("password", "password", request.post["password"]),
+                        Input("submit", "submit", "Submit"),
                     }
                 );
                 doc.print(response.body, true);
