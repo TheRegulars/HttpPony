@@ -31,9 +31,6 @@ class BasicClient
 {
 public:
 
-    /**
-     * \todo Sync connect
-     */
     OperationStatus connect(const Uri& target, io::Connection& connection) const
     {
         boost_tcp::resolver::query query = make_query(target, connection);

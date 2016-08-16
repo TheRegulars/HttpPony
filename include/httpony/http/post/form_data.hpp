@@ -30,7 +30,6 @@ namespace post {
 
 /**
  * \see https://tools.ietf.org/html/rfc2388
- * \todo Handle files
  */
 class FormData final : public PostFormat
 {

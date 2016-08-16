@@ -110,7 +110,6 @@ OperationStatus Http1Parser::response(std::istream& stream, Response& response) 
             if ( !header_parameters(cookie_stream, cookie_params) || cookie_params.empty() )
                 return "malformed headers";
 
-            /// \todo parse cookie (read up rfc)
             Cookie cookie(cookie_params.front().second);
             response.cookies.append(cookie_params.front().first, cookie);
         }
