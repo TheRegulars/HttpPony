@@ -174,6 +174,7 @@ BOOST_AUTO_TEST_CASE( test_build_query_string )
 
 BOOST_AUTO_TEST_CASE( test_uri_cmp )
 {
+    BOOST_CHECK( Uri({"", "", {}, {}, ""}) == Uri() );
     BOOST_CHECK( Uri({"a", "b", {"c"}, {{"d", "e"}}, "f"}) == Uri({"a", "b", {"c"}, {{"d", "e"}}, "f"}) );
     BOOST_CHECK( Uri({"a", "b", {"c"}, {{"d", "e"}}, "f"}) != Uri({"a", "b", {"c"}, {{"d", "e"}}, "X"}) );
     BOOST_CHECK( Uri({"a", "b", {"c"}, {{"d", "e"}}, "f"}) != Uri({"a", "b", {"c"}, {{"d", "X"}}, "f"}) );

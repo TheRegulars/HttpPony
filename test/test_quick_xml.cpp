@@ -32,6 +32,8 @@ using namespace httpony::quick_xml::html;
 BOOST_AUTO_TEST_CASE( test_text )
 {
     Text text("hello");
+    BOOST_CHECK( !text.is_attribute() );
+    BOOST_CHECK( !text.is_element() );
     BOOST_CHECK( text.contents() == "hello" );
     boost::test_tools::output_test_stream output;
     output << text;
@@ -41,6 +43,8 @@ BOOST_AUTO_TEST_CASE( test_text )
 BOOST_AUTO_TEST_CASE( test_attribute )
 {
     Attribute attribute("hello", "world");
+    BOOST_CHECK( attribute.is_attribute() );
+    BOOST_CHECK( !attribute.is_element() );
     BOOST_CHECK( attribute.name() == "hello" );
     BOOST_CHECK( attribute.value() == "world" );
     boost::test_tools::output_test_stream output;
@@ -51,14 +55,26 @@ BOOST_AUTO_TEST_CASE( test_attribute )
 BOOST_AUTO_TEST_CASE( test_attributes )
 {
     Attributes attributes({{"hello", "world"}, {"foo", "bar"}});
+    BOOST_CHECK( attributes.is_attribute() );
+    BOOST_CHECK( !attributes.is_element() );
     boost::test_tools::output_test_stream output;
     output << attributes;
     BOOST_CHECK( output.is_equal( " hello='world' foo='bar'" ) );
 }
 
+BOOST_AUTO_TEST_CASE( test_attributes_empty )
+{
+    Attributes attributes{};
+    boost::test_tools::output_test_stream output;
+    output << attributes;
+    BOOST_CHECK( output.is_equal( "" ) );
+}
+
 BOOST_AUTO_TEST_CASE( test_doctype )
 {
     DocType doctype("html");
+    BOOST_CHECK( !doctype.is_attribute() );
+    BOOST_CHECK( !doctype.is_element() );
     BOOST_CHECK( doctype.string() == "html" );
     boost::test_tools::output_test_stream output;
     output << doctype;
@@ -68,6 +84,8 @@ BOOST_AUTO_TEST_CASE( test_doctype )
 BOOST_AUTO_TEST_CASE( test_xml_declaration )
 {
     XmlDeclaration xml_decl;
+    BOOST_CHECK( !xml_decl.is_attribute() );
+    BOOST_CHECK( !xml_decl.is_element() );
     BOOST_CHECK( xml_decl.version() == "1.0" );
     BOOST_CHECK( xml_decl.encoding() == "utf-8" );
     boost::test_tools::output_test_stream output;
@@ -78,6 +96,8 @@ BOOST_AUTO_TEST_CASE( test_xml_declaration )
 BOOST_AUTO_TEST_CASE( test_block_element_empty )
 {
     BlockElement elem("foo");
+    BOOST_CHECK( !elem.is_attribute() );
+    BOOST_CHECK( elem.is_element() );
     boost::test_tools::output_test_stream output;
     output << elem;
     BOOST_CHECK( output.is_equal( "<foo></foo>" ) );
@@ -86,6 +106,8 @@ BOOST_AUTO_TEST_CASE( test_block_element_empty )
 BOOST_AUTO_TEST_CASE( test_element_empty )
 {
     Element elem("foo");
+    BOOST_CHECK( !elem.is_attribute() );
+    BOOST_CHECK( elem.is_element() );
     boost::test_tools::output_test_stream output;
     output << elem;
     BOOST_CHECK( output.is_equal( "<foo/>" ) );
@@ -121,7 +143,13 @@ HtmlDocument html_document()
         "Hello",
         Element{"body",
             Comment{"This is an example"},
-            Element{"p", Attribute{"id", "content"}, Text{"hello world"}},
+            Element{"p",
+                Attributes{
+                    {"id", "content"},
+                    {"class", "main"}
+                },
+                Text{"hello world"}
+            },
         },
     };
 }
@@ -135,7 +163,7 @@ BOOST_AUTO_TEST_CASE( test_html_document )
         "<head><title>Hello</title></head>"
         "<body>"
         "<!--This is an example-->"
-        "<p id='content'>hello world</p>"
+        "<p id='content' class='main'>hello world</p>"
         "</body>"
         "</html>"
     ) );
@@ -153,7 +181,7 @@ R"(<!DOCTYPE html>
     </head>
     <body>
         <!--This is an example-->
-        <p id='content'>hello world</p>
+        <p id='content' class='main'>hello world</p>
     </body>
 </html>)"
     ) );
@@ -173,6 +201,7 @@ R"(<!DOCTYPE html>
         <!--This is an example-->
         <p
             id='content'
+            class='main'
         >hello world</p>
     </body>
 </html>)"
@@ -194,7 +223,7 @@ R"(<!DOCTYPE html>
         <!--
             This is an example
         -->
-        <p id='content'>hello world</p>
+        <p id='content' class='main'>hello world</p>
     </body>
 </html>)"
     ) );
@@ -203,6 +232,8 @@ R"(<!DOCTYPE html>
 BOOST_AUTO_TEST_CASE( test_comment )
 {
     Comment text("hello");
+    BOOST_CHECK( !text.is_attribute() );
+    BOOST_CHECK( !text.is_element() );
     BOOST_CHECK( text.contents() == "hello" );
     boost::test_tools::output_test_stream output;
     output << text;
@@ -212,6 +243,8 @@ BOOST_AUTO_TEST_CASE( test_comment )
 BOOST_AUTO_TEST_CASE( test_ul )
 {
     List list;
+    BOOST_CHECK( !list.is_attribute() );
+    BOOST_CHECK( list.is_element() );
     list.add_item(Text{"hello"});
     list.add_item(Text{"world"});
     boost::test_tools::output_test_stream output;
@@ -222,6 +255,8 @@ BOOST_AUTO_TEST_CASE( test_ul )
 BOOST_AUTO_TEST_CASE( test_ol )
 {
     List list(true);
+    BOOST_CHECK( !list.is_attribute() );
+    BOOST_CHECK( list.is_element() );
     list.add_item(Text{"hello"});
     list.add_item(Text{"world"});
     boost::test_tools::output_test_stream output;
@@ -232,6 +267,8 @@ BOOST_AUTO_TEST_CASE( test_ol )
 BOOST_AUTO_TEST_CASE( test_link )
 {
     Link link("/foo", "bar");
+    BOOST_CHECK( !link.is_attribute() );
+    BOOST_CHECK( link.is_element() );
     BOOST_CHECK( link.target() == "/foo" );
     link.set_target("/bar");
     BOOST_CHECK( link.target() == "/bar" );
@@ -243,6 +280,8 @@ BOOST_AUTO_TEST_CASE( test_link )
 BOOST_AUTO_TEST_CASE( test_input )
 {
     Input input("name", "text", "hello");
+    BOOST_CHECK( !input.is_attribute() );
+    BOOST_CHECK( input.is_element() );
     BOOST_CHECK( input.value() == "hello" );
     input.set_value("world");
     BOOST_CHECK( input.value() == "world" );
@@ -254,6 +293,8 @@ BOOST_AUTO_TEST_CASE( test_input )
 BOOST_AUTO_TEST_CASE( test_label )
 {
     Label label("name", "Name");
+    BOOST_CHECK( !label.is_attribute() );
+    BOOST_CHECK( label.is_element() );
     BOOST_CHECK( label.target() == "name" );
     label.set_target("username");
     BOOST_CHECK( label.target() == "username" );

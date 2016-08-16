@@ -62,4 +62,6 @@ if (BUILD_TESTING)
 
     melanotest(test_quick_xml)
 
+    melanotest(test_multipart)
+
 endif()

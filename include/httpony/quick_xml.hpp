@@ -308,9 +308,9 @@ public:
         if ( children().empty() )
             return;
         auto iter = children().begin();
-        (**iter).print(out, indent.next());
+        (**iter).print(out, indent);
         for ( ++iter; iter != children().end(); ++iter )
-                (**iter).print(out, indent.next());
+                (**iter).print(out, indent);
     }
 
     bool is_attribute() const override
