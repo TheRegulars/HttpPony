@@ -26,7 +26,6 @@
 #include "httpony/multipart.hpp"
 
 namespace httpony {
-namespace http {
 
 class Formatter
 {
@@ -277,6 +276,5 @@ private:
     std::string endl;
 };
 
-} // namespace http
 } // namespace httpony
 #endif // HTTPONY_HTTP_WRITE_HPP

@@ -38,7 +38,7 @@ public:
         httpony::Response response = build_response(request, status);
 
         std::cout << "=============\nServer:\n";
-        httpony::http::Http1Formatter("\n").request(std::cout, request);
+        httpony::Http1Formatter("\n").request(std::cout, request);
         std::cout << "=============\n";
 
         send_response(request, response);
@@ -133,7 +133,7 @@ protected:
     void process_response(httpony::Request& request, httpony::Response& response) override
     {
         std::cout << "=============\nClient:\n";
-        httpony::http::Http1Formatter("\n").response(std::cout, response);
+        httpony::Http1Formatter("\n").response(std::cout, response);
         std::cout << "=============\n";
     }
 

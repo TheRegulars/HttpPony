@@ -303,7 +303,7 @@ OperationStatus Server::send(Response& response) const
     auto stream = response.connection.send_stream();
     /// \todo Switch formatter based on protocol
     /// (Needs to implement stuff like HTTP/2)
-    http::Http1Formatter().response(stream, response);
+    Http1Formatter().response(stream, response);
     return stream.send();
 }
 

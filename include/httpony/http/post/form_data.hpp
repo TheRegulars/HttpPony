@@ -95,7 +95,7 @@ private:
             MimeType("multipart", "form-data", {"boundary", boundary})
         );
         /// \todo Change formatter based on the protocol
-        http::Http1Formatter formatter;
+        Http1Formatter formatter;
 
         Multipart form_data(boundary);
         form_data.parts.reserve(request.post.size());

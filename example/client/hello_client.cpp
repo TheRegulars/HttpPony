@@ -22,7 +22,7 @@
 
 void print_response(httpony::Response& response)
 {
-    httpony::http::Http1Formatter("\n").response(std::cout, response);
+    httpony::Http1Formatter("\n").response(std::cout, response);
 }
 
 int main(int argc, char** argv)

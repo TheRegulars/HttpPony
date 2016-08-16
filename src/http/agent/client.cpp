@@ -45,7 +45,7 @@ OperationStatus Client::get_response_attempt(int attempt, Request& request, Resp
     {
         process_request(request);
         auto ostream = request.connection.send_stream();
-        http::Http1Formatter().request(ostream, request);
+        Http1Formatter().request(ostream, request);
         auto status = ostream.send();
         if ( status.error() )
         {
