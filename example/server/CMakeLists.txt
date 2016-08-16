@@ -14,22 +14,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-add_custom_target(examples)
 
-function(example name)
-    add_executable(${name} ${name}.cpp)
-    target_link_libraries(${name} ${LIBRARY_NAME})
-    add_dependencies(examples ${name})
-endfunction()
+example(hello_server)
+example(simple_server)
+example(server_upload)
 
-set(OPENSSL_FOUND ON)
-find_package(OpenSSL QUIET)
-if(OPENSSL_FOUND)
-    add_subdirectory(ssl)
+
+set(Boot_FOUND ON)
+set(Magic_FOUND ON)
+find_package(Boost COMPONENTS filesystem QUIET)
+find_package(Magic QUIET)
+if(Boot_FOUND AND Magic_FOUND)
+    example(file_browser)
+    target_link_libraries(file_browser ${Boost_LIBRARIES} ${Magic_LIBRARY})
 else()
-    message(STATUS "SSL examples disabled (You need OpenSSL for them)")
+    message(STATUS "file_browser example disabled (You need libmagic and Boost::filesystem for this)")
 endif()
-
-add_subdirectory(server)
-add_subdirectory(client)
-add_subdirectory(client_server)

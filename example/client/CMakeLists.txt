@@ -14,22 +14,5 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-add_custom_target(examples)
 
-function(example name)
-    add_executable(${name} ${name}.cpp)
-    target_link_libraries(${name} ${LIBRARY_NAME})
-    add_dependencies(examples ${name})
-endfunction()
-
-set(OPENSSL_FOUND ON)
-find_package(OpenSSL QUIET)
-if(OPENSSL_FOUND)
-    add_subdirectory(ssl)
-else()
-    message(STATUS "SSL examples disabled (You need OpenSSL for them)")
-endif()
-
-add_subdirectory(server)
-add_subdirectory(client)
-add_subdirectory(client_server)
+example(hello_client)
