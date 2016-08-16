@@ -62,8 +62,7 @@ public:
     std::string encode(const std::string& input) const
     {
         std::string output;
-        if ( !encode(input, output) )
-            throw EncodingError("Cannot encode to" + name() );
+        encode(input, output);
         return output;
     }
 
@@ -81,32 +80,25 @@ public:
      * \brief Encodes \p input into \p output
      * \param input  String to encode
      * \param output String to store the result into
-     * \return \b true on succees (cannot fail)
      */
-    bool encode(const std::string& input, std::string& output) const
+    void encode(const std::string& input, std::string& output) const
     {
         output.clear();
         output.reserve(encoded_size(input.size()));
 
-        bool encoded = encode(
+        encode(
             byte_view(reinterpret_cast<const byte*>(input.data()), input.size()),
             std::back_inserter(output)
         );
-
-        if ( !encoded )
-            output.clear();
-
-        return encoded;
     }
 
     /**
      * \brief Encodes \p input into \p output
      * \param input     View to a byte string to encode
      * \param output    Output iterator accepting the converted characters
-     * \return \b true on succees (cannot fail)
      */
     template<class OutputIterator>
-        bool encode(byte_view input, OutputIterator output) const
+        void encode(byte_view input, OutputIterator output) const
     {
         uint64_t group = 0;
         int count = 0;
@@ -142,8 +134,6 @@ public:
                 }
             }
         }
-
-        return true;
     }
 
 

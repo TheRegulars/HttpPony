@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE( test_input )
     BOOST_CHECK( input.value() == "world" );
     boost::test_tools::output_test_stream output;
     output << input;
-    BOOST_CHECK( output.is_equal( "<input name='name' id='name' type='text' value='world'/>" ) );
+    BOOST_CHECK( output.is_equal( "<input type='text' name='name' id='name' value='world'/>" ) );
 }
 
 BOOST_AUTO_TEST_CASE( test_label )

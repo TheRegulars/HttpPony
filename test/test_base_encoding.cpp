@@ -30,22 +30,22 @@ using namespace httpony;
 BOOST_AUTO_TEST_CASE( test_base64_encode )
 {
     std::string output;
-    BOOST_CHECK( Base64().encode("EUP", output) );
+    Base64().encode("EUP", output);
     BOOST_CHECK_EQUAL( output, "RVVQ" );
 
-    BOOST_CHECK( Base64().encode("Hello!", output) );
+    Base64().encode("Hello!", output);
     BOOST_CHECK_EQUAL( output, "SGVsbG8h" );
 
-    BOOST_CHECK( Base64().encode("1", output) );
+    Base64().encode("1", output);
     BOOST_CHECK_EQUAL( output, "MQ==" );
 
-    BOOST_CHECK( Base64().encode("x", output) );
+    Base64().encode("x", output);
     BOOST_CHECK_EQUAL( output, "eA==" );
 
-    BOOST_CHECK( Base64().encode("Hello world", output) );
+    Base64().encode("Hello world", output);
     BOOST_CHECK_EQUAL( output, "SGVsbG8gd29ybGQ=" );
 
-    BOOST_CHECK( Base64().encode("HttPony", output) );
+    Base64().encode("HttPony", output);
     BOOST_CHECK_EQUAL( output, "SHR0UG9ueQ==" );
 
     BOOST_CHECK_EQUAL( Base64().encode("~~>~~?"), "fn4+fn4/" );
