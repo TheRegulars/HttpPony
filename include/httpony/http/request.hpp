@@ -35,14 +35,17 @@ namespace httpony {
  */
 struct Auth
 {
-    Auth(){}
-
+    std::string auth_scheme;
     std::string user;
     std::string password;
-    std::string auth_scheme;
     std::string auth_string;
     std::string realm;
     Headers     parameters;
+
+    bool empty() const
+    {
+        return auth_scheme.empty();
+    }
 };
 
 struct RequestFile
@@ -80,20 +83,24 @@ struct Request
         cookies.clear();
         get.clear();
         post.clear();
-        auth = {};
+        files.clear();
         body = {};
+        user_agent = {};
+        auth = {};
+        proxy_auth = {};
     }
 
     std::string method;
     Uri         uri;
     Protocol    protocol = Protocol::http_1_1;
     Headers     headers;
+    UserAgent   user_agent;
     DataMap     cookies;
     DataMap     get;
     DataMap     post;
     melanolib::OrderedMultimap<std::string, RequestFile> files;
     Auth        auth;
-    UserAgent   user_agent;
+    Auth        proxy_auth;
 
     io::ContentStream body;
 

@@ -24,6 +24,7 @@
 
 #include "httpony/http/response.hpp"
 #include "httpony/multipart.hpp"
+#include "httpony/base_encoding.hpp"
 
 namespace httpony {
 
@@ -192,12 +193,13 @@ private:
         stream << endl;
     }
 
-    void header_parameter(std::ostream& stream, const std::string& name, const std::string& value) const
+    void header_parameter(std::ostream& stream, const std::string& name,
+                          const std::string& value, bool force_quotes = false) const
     {
         using namespace melanolib::string;
         static const char* const slashable = "\" \t\\";
         stream << name <<  '=';
-        if ( contains_any(value, slashable) )
+        if ( force_quotes || contains_any(value, slashable) )
         {
             stream << '"' << add_slashes(value, slashable) << '"';
         }
@@ -259,6 +261,25 @@ private:
             stream << endl;
         }
 
+        if ( !request.headers.contains("Authorization") )
+        {
+            if ( !request.proxy_auth.empty() )
+            {
+                auth(stream, "Authorization", request.auth);
+            }
+            else if ( request.uri.authority.user && request.uri.authority.password )
+            {
+                auth(stream, "Authorization", Auth{
+                    "Basic",
+                    *request.uri.authority.user,
+                    *request.uri.authority.password
+                });
+            }
+        }
+
+        if ( !request.proxy_auth.empty() && !request.headers.contains("Proxy-Authorization") )
+            auth(stream, "Proxy-Authorization", request.proxy_auth);
+
         /// \todo authentication
 
         if ( request.body.has_data() )
@@ -270,6 +291,19 @@ private:
                 header(stream, "Content-Length", request.body.content_length());
         }
 
+        stream << endl;
+    }
+
+    void auth(std::ostream& stream, const std::string& header_name, const Auth& auth) const
+    {
+        stream << header_name << ": " << auth.auth_scheme << ' ';
+        if ( auth.auth_scheme == "Basic" && auth.auth_string.empty() )
+            stream << Base64().encode(auth.user + ':' + auth.password);
+        else
+            stream << auth.auth_string;
+        stream << ' ';
+        header_parameter(stream, "realm", auth.realm);
+        header_parameters(stream, auth.parameters, "; ");
         stream << endl;
     }
 
