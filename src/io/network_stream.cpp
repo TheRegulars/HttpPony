@@ -54,8 +54,17 @@ bool InputContentStream::start_input(std::streambuf* buffer, const Headers& head
     return true;
 }
 
-std::string InputContentStream::read_all()
+std::string InputContentStream::read_all(bool preserve_input)
 {
+    if ( preserve_input )
+    {
+        std::ostringstream out;
+        write_to(out);
+        if ( out.str().size() != _content_length )
+            _error = true;
+        return out.str();
+    }
+
     std::string all(_content_length, ' ');
     read(&all[0], _content_length);
 

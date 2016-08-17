@@ -185,3 +185,78 @@ BOOST_AUTO_TEST_CASE( test_io_input_multiple_write_to_boost_streambuf )
     BOOST_CHECK( test1.is_equal( "hello\n" ) );
     BOOST_CHECK( test2.is_equal( "hello\n" ) );
 }
+
+BOOST_AUTO_TEST_CASE( test_input_read_all_consume )
+{
+    std::stringbuf source("hello\n");
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", std::to_string(source.str().size())},
+    };
+    InputContentStream stream(&source, headers);
+
+    BOOST_CHECK( stream.read_all(false) == "hello\n" );
+    BOOST_CHECK( !stream.has_error() );
+    BOOST_CHECK( stream.read_all() == "" );
+    BOOST_CHECK( stream.has_error() );
+}
+
+BOOST_AUTO_TEST_CASE( test_input_read_all_preserve )
+{
+    std::stringbuf source("hello\n");
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", std::to_string(source.str().size())},
+    };
+    InputContentStream stream(&source, headers);
+
+    BOOST_CHECK( stream.read_all(true) == "hello\n" );
+    BOOST_CHECK( !stream.has_error() );
+    BOOST_CHECK( stream.read_all() == "hello\n" );
+    BOOST_CHECK( !stream.has_error() );
+}
+
+BOOST_AUTO_TEST_CASE( test_io_input_read_all_consume )
+{
+    std::stringbuf source("hello\n");
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", std::to_string(source.str().size())},
+    };
+    ContentStream io_stream;
+
+    io_stream.start_input(&source, headers);
+
+    BOOST_CHECK( io_stream.read_all(false) == "hello\n" );
+    BOOST_CHECK( !io_stream.has_error() );
+    BOOST_CHECK( io_stream.read_all() == "" );
+    BOOST_CHECK( io_stream.has_error() );
+}
+
+BOOST_AUTO_TEST_CASE( test_io_input_read_all_preserve )
+{
+    std::stringbuf source("hello\n");
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", std::to_string(source.str().size())},
+    };
+    ContentStream io_stream;
+
+    io_stream.start_input(&source, headers);
+
+    BOOST_CHECK( io_stream.read_all(true) == "hello\n" );
+    BOOST_CHECK( !io_stream.has_error() );
+    BOOST_CHECK( io_stream.read_all() == "hello\n" );
+    BOOST_CHECK( !io_stream.has_error() );
+}
+
+BOOST_AUTO_TEST_CASE( test_io_output_read_all )
+{
+    ContentStream io_stream;
+
+    io_stream.start_output(MimeType{"text/plain"});
+    io_stream << "hello\n";
+
+    BOOST_CHECK( io_stream.read_all() == "hello\n" );
+    BOOST_CHECK( !io_stream.has_error() );
+}

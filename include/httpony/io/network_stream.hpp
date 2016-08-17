@@ -105,8 +105,10 @@ public:
 
     /**
      * \brief Reads all available data and returns it as a string
+     * \param preserve_input    If \b true, the read characters will not
+     *                          be extracted from the stream
      */
-    std::string read_all();
+    std::string read_all(bool preserve_input = false);
 
     /**
      * \brief Content type, as advertised by the headers passed to start_input()
@@ -137,6 +139,7 @@ public:
             {
                 rdbuf()->pubseekpos(0);
                 output << rdbuf();
+                rdbuf()->pubseekpos(0);
             }
         }
     }
@@ -304,10 +307,18 @@ public:
         return ok;
     }
 
-    std::string read_all()
+    std::string read_all(bool preserve_input = false)
     {
         if ( _mode == ContentStream::OpenMode::Input )
-            return _input.read_all();
+            return _input.read_all(preserve_input);
+
+        if ( _mode == ContentStream::OpenMode::Output )
+        {
+            std::ostringstream out;
+            _output.write_to(out);
+            return out.str();
+        }
+
         return "";
     }
 
