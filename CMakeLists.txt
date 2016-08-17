@@ -22,7 +22,8 @@ project(${NICE_NAME} VERSION 0.1 LANGUAGES CXX)
 set(PROJECT_DESCRIPTION "A C++ HTTP Server library")
 string(TOLOWER ${NICE_NAME} LIBRARY_NAME)
 
-include(cmake/misc.cmake)
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake2")
+include(misc)
 
 # C++ Standard
 use_cxx_standard(14)
@@ -54,7 +55,11 @@ endif()
 include_directories("lib/Melanolib/include/")
 include_directories(include)
 add_subdirectory(src lib)
-add_subdirectory(lib/Melanolib/src EXCLUDE_FROM_ALL)
+
+if(NOT TARGET melano)
+    message(STATUS "Including Melanolib")
+    add_subdirectory(lib/Melanolib/src EXCLUDE_FROM_ALL)
+endif()
 
 add_subdirectory(example EXCLUDE_FROM_ALL)
 
@@ -71,5 +76,5 @@ endif(DOXYGEN_FOUND)
 # Tests
 set(LCOV_SOURCE_BASE_DIR "${CMAKE_SOURCE_DIR}")
 set(LCOV_REMOVE_PATTERN "lib/*.cpp" "lib/*.hpp" "test_*.cpp")
-include(cmake/testing.cmake)
+include(testing)
 add_subdirectory(test)
