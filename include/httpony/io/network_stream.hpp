@@ -122,7 +122,23 @@ public:
     void write_to(std::ostream& output)
     {
         if ( has_data() )
-            output << rdbuf();
+        {
+            if ( boost::asio::streambuf* buffer = dynamic_cast<boost::asio::streambuf*>(rdbuf()) )
+            {
+                for ( const auto& buf : buffer->data() )
+                {
+                    auto data = boost::asio::buffer_cast<const char*>(buf);
+                    auto size = boost::asio::buffer_size(buf);
+                    if ( !output.write(data, size) )
+                        return;
+                }
+            }
+            else
+            {
+                rdbuf()->pubseekpos(0);
+                output << rdbuf();
+            }
+        }
     }
 
 private:
@@ -222,7 +238,15 @@ public:
     void write_to(std::ostream& output)
     {
         if ( has_data() )
-            output << &buffer;
+        {
+            for ( const auto& buf : buffer.data() )
+            {
+                auto data = boost::asio::buffer_cast<const char*>(buf);
+                auto size = boost::asio::buffer_size(buf);
+                if ( !output.write(data, size) )
+                    return;
+            }
+        }
     }
 
 private:
@@ -310,15 +334,6 @@ public:
         return true;
     }
 
-    /**
-     * \brief Writes the payload to a stream
-     */
-    void write_to(std::ostream& output)
-    {
-        if ( has_data() )
-            output << rdbuf();
-    }
-
 // Both
     bool has_data() const
     {
@@ -364,6 +379,17 @@ public:
         if ( _mode == ContentStream::OpenMode::Output )
             return _output.content_type();
         return {};
+    }
+
+    /**
+     * \brief Writes the payload to a stream
+     */
+    void write_to(std::ostream& output)
+    {
+        if ( _mode == ContentStream::OpenMode::Input )
+            _input.write_to(output);
+        if ( _mode == ContentStream::OpenMode::Output )
+            _output.write_to(output);
     }
 
 // Extra

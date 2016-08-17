@@ -64,4 +64,7 @@ if (BUILD_TESTING)
 
     melanotest(test_multipart)
 
+    melanotest(test_streams)
+    target_link_libraries(test_streams ${COMMON_LIBRARIES})
+
 endif()
