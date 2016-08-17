@@ -280,8 +280,6 @@ private:
         if ( !request.proxy_auth.empty() && !request.headers.contains("Proxy-Authorization") )
             auth(stream, "Proxy-Authorization", request.proxy_auth);
 
-        /// \todo authentication
-
         if ( request.body.has_data() )
         {
             if ( !request.headers.contains("Content-Type") )

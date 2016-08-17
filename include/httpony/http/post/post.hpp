@@ -30,7 +30,10 @@
 namespace httpony {
 namespace post {
 
-/// \todo multipart/mixed ?
+/**
+ * \brief Base class for fomats used to handle payloads
+ * \todo Some way to handle json (and maybe even xml)
+ */
 class PostFormat
 {
 public:
