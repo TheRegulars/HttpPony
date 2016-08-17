@@ -103,3 +103,85 @@ BOOST_AUTO_TEST_CASE( test_input_multiple_write_to_boost_streambuf )
     BOOST_CHECK( test2.is_equal( "hello\n" ) );
 }
 
+BOOST_AUTO_TEST_CASE( test_io_output_write_to )
+{
+    ContentStream io_stream;
+
+    io_stream.start_output(MimeType{"text/plain"});
+    io_stream << "hello\n";
+
+    boost::test_tools::output_test_stream test;
+    io_stream.write_to(test);
+    BOOST_CHECK( test.is_equal( "hello\n" ) );
+}
+
+BOOST_AUTO_TEST_CASE( test_io_output_multiple_write_to )
+{
+    ContentStream io_stream;
+
+    io_stream.start_output(MimeType{"text/plain"});
+    io_stream << "hello\n";
+
+    boost::test_tools::output_test_stream test1;
+    boost::test_tools::output_test_stream test2;
+    io_stream.write_to(test1);
+    io_stream.write_to(test2);
+    BOOST_CHECK( test1.is_equal( "hello\n" ) );
+    BOOST_CHECK( test2.is_equal( "hello\n" ) );
+}
+
+BOOST_AUTO_TEST_CASE( test_io_input_write_to )
+{
+    std::stringbuf source("hello\n");
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", std::to_string(source.str().size())},
+    };
+    ContentStream io_stream;
+
+    io_stream.start_input(&source, headers);
+
+    boost::test_tools::output_test_stream test;
+    io_stream.write_to(test);
+    BOOST_CHECK( test.is_equal( "hello\n" ) );
+}
+
+BOOST_AUTO_TEST_CASE( test_io_input_multiple_write_to )
+{
+    std::stringbuf source("hello\n");
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", std::to_string(source.str().size())},
+    };
+    InputContentStream io_stream;
+
+    io_stream.start_input(&source, headers);
+
+    boost::test_tools::output_test_stream test1;
+    boost::test_tools::output_test_stream test2;
+    io_stream.write_to(test1);
+    io_stream.write_to(test2);
+    BOOST_CHECK( test1.is_equal( "hello\n" ) );
+    BOOST_CHECK( test2.is_equal( "hello\n" ) );
+}
+
+BOOST_AUTO_TEST_CASE( test_io_input_multiple_write_to_boost_streambuf )
+{
+    boost::asio::streambuf source;
+    std::ostream(&source) << "hello\n";
+
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", "6"},
+    };
+    InputContentStream io_stream;
+
+    io_stream.start_input(&source, headers);
+
+    boost::test_tools::output_test_stream test1;
+    boost::test_tools::output_test_stream test2;
+    io_stream.write_to(test1);
+    io_stream.write_to(test2);
+    BOOST_CHECK( test1.is_equal( "hello\n" ) );
+    BOOST_CHECK( test2.is_equal( "hello\n" ) );
+}
