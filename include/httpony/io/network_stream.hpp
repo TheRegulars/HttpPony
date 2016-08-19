@@ -35,6 +35,9 @@ namespace io {
 
 /**
  * \brief Reads an incoming message payload
+ * \todo Maybe instead of allowing arbitrary std::streambuf pointers
+ *       only boost::asio::streambuf pointers should be allowed.
+ *       This would simplify the logic for write_to/read_all.
  */
 class InputContentStream : public std::istream
 {
