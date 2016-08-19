@@ -186,7 +186,6 @@ private:
                     else
                         on_failure(*conn_iter, error_to_status(error));
 
-                    /// \todo Keep the connection alive if needed
                     connections.erase(conn_iter);
                     accept(on_success, on_failure, create_connection);
                 }
