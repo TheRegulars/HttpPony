@@ -299,6 +299,17 @@ struct Uri
         std::string fragment
     );
 
+
+    Uri(
+        std::string base,
+        DataMap query,
+        std::string fragment = ""
+    ) : Uri(base)
+    {
+        query = std::move(query);
+        fragment = std::move(fragment);
+    }
+
     Uri(
         std::string scheme,
         Authority authority,
