@@ -130,7 +130,7 @@ public:
      */
     void clear_timeout()
     {
-        _timeout = {};
+        _timeout = melanolib::Optional<melanolib::time::seconds>();
     }
 
     /**
