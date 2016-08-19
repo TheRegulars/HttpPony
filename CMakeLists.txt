@@ -17,12 +17,14 @@
 cmake_minimum_required(VERSION 2.6)
 cmake_policy(SET CMP0009 NEW)
 cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0002 OLD)
+
 set(NICE_NAME HttPony)
 project(${NICE_NAME} VERSION 0.1 LANGUAGES CXX)
 set(PROJECT_DESCRIPTION "A C++ HTTP Server library")
 string(TOLOWER ${NICE_NAME} LIBRARY_NAME)
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(misc)
 
 # C++ Standard
