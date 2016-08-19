@@ -27,6 +27,7 @@
 #include <ostream>
 #include <melanolib/string/quickstream.hpp>
 #include <melanolib/string/ascii.hpp>
+#include <melanolib/string/simple_stringutils.hpp>
 /// \endcond
 
 #include "httpony/util/version.hpp"
@@ -173,13 +174,12 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const UserAgent& agent)
     {
-        if ( !agent.empty() )
-        {
-            os << agent[0];
-            for ( auto it = agent.begin() + 1; it != agent.end(); ++it )
-                os << ' ' << *it;
-        }
-        return os;
+        return os << agent.string();
+    }
+
+    std::string string() const
+    {
+        return melanolib::string::implode(" ", tokens);
     }
 
     UserAgent& append_comment(const std::string& comment)
