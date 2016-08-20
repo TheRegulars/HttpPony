@@ -53,7 +53,10 @@ public:
           _content_length(other._content_length),
           _content_type(std::move(other._content_type)),
           _error(other._error)
-    {}
+    {
+        seekg(other.tellg());
+        setstate(other.rdstate());
+    }
 
 
     InputContentStream& operator=(InputContentStream&& other)
@@ -80,7 +83,7 @@ public:
     }
 
     /**
-     * \brief Whether the stream encountered an error
+     * \brief Whether the stream encountered a high-level error
      */
     bool has_error() const
     {
@@ -95,6 +98,11 @@ public:
     bool operator!() const
     {
         return _error || fail();
+    }
+
+    void clear_error()
+    {
+        _error = false;
     }
 
     /**
@@ -333,11 +341,6 @@ public:
         _output.start_output(content_type);
         set_mode(OpenMode::Output);
         return true;
-    }
-
-    bool start_output(const std::string& content_type)
-    {
-        return start_output(MimeType(content_type));
     }
 
     bool stop_output()

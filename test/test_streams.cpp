@@ -260,3 +260,33 @@ BOOST_AUTO_TEST_CASE( test_io_output_read_all )
     BOOST_CHECK( io_stream.read_all() == "hello\n" );
     BOOST_CHECK( !io_stream.has_error() );
 }
+
+BOOST_AUTO_TEST_CASE( test_output_move_ctor )
+{
+    OutputContentStream ostream("text/plain");
+    ostream << "Hello";
+    OutputContentStream other_stream = std::move(ostream);
+    other_stream << " world!\n";
+    boost::test_tools::output_test_stream test;
+    other_stream.write_to(test);
+    BOOST_CHECK( test.is_equal("Hello world!\n") );
+}
+
+BOOST_AUTO_TEST_CASE( test_input_move_ctor )
+{
+    std::stringbuf source("Hello\n");
+    Headers headers{
+        {"Content-Type", "text/plain"},
+        {"Content-Length", std::to_string(source.str().size())},
+    };
+    InputContentStream istream(&source, headers);
+    BOOST_CHECK( istream.read_all(true) == "Hello\n" );
+    BOOST_CHECK_EQUAL( istream.get(), 'H' );
+    BOOST_CHECK_EQUAL( istream.tellg(), 1 );
+
+    InputContentStream other_stream = std::move(istream);
+    BOOST_CHECK( other_stream.tellg() == 1 );
+    BOOST_CHECK_EQUAL( other_stream.get(), 'e' );
+    BOOST_CHECK_EQUAL( other_stream.read_all(true), "Hello\n" );
+
+}

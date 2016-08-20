@@ -36,6 +36,7 @@ public:
     using Parameter = std::pair<std::string, std::string>;
 
     MimeType(const std::string& string);
+    MimeType(const char* string) : MimeType(std::string(string)) {}
 
     MimeType(){}
 
