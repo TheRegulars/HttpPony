@@ -51,6 +51,11 @@ public:
     void start();
 
     /**
+     * \brief Runs the server in the current thread
+     */
+    void run();
+
+    /**
      * \brief Whether the server has been started
      */
     bool started() const;
@@ -159,6 +164,13 @@ private:
         std::ostream& output
     ) const;
 
+    virtual void on_connection(io::Connection& connection);
+
+    void run_init();
+    void run_body();
+
+
+    io::ListenAddress _connect_address;
     io::ListenAddress _listen_address;
     io::BasicServer _listen_server;
     std::size_t _max_request_size = io::NetworkInputBuffer::unlimited_input();

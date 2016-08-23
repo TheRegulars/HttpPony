@@ -124,6 +124,11 @@ public:
         io_service.run();
     }
 
+    bool running() const
+    {
+        return !io_service.stopped();
+    }
+
     /**
      * \brief Remove timeouts, connections will block indefinitely
      * \see set_timeout(), timeout()

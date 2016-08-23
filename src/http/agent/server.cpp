@@ -29,7 +29,8 @@
 namespace httpony {
 
 Server::Server(io::ListenAddress listen_address)
-    : _listen_address(std::move(listen_address))
+    : _connect_address(std::move(listen_address)),
+      _listen_address(_connect_address)
 {}
 
 Server::~Server()
@@ -59,54 +60,71 @@ void Server::set_ulimited_request_size()
 
 bool Server::started() const
 {
-    return _thread.joinable();
+    return _thread.joinable() || _listen_server.running();
 }
 
 void Server::start()
 {
-    auto connect_address = _listen_address;
-    _listen_address = _listen_server.start(connect_address);
+    run_init();
+    _thread = std::thread([this](){ run_body(); });
+}
 
-    _thread = std::thread([this, connect_address](){
-        _listen_server.run(
-            [this](io::Connection& connection){
-                if ( accept(connection) )
-                {
-                    /// \todo Switch parser based on protocol
-                    connection.input_buffer().expect_input(_max_request_size);
+void Server::on_connection(io::Connection& connection)
+{
+    if ( accept(connection) )
+    {
+        /// \todo Switch parser based on protocol
+        connection.input_buffer().expect_input(_max_request_size);
 
-                    auto stream = connection.receive_stream();
-                    Request request;
-                    Http1Parser parser;
-                    auto status = parser.request(stream, request);
-                    connection.input_buffer().expect_input(0);
+        auto stream = connection.receive_stream();
+        Request request;
+        Http1Parser parser;
+        auto status = parser.request(stream, request);
+        connection.input_buffer().expect_input(0);
 
-                    if ( stream.timed_out() )
-                    {
-                        status = StatusCode::RequestTimeout;
-                    }
-                    else if ( request.body.has_data() )
-                    {
-                        connection.input_buffer().expect_input(request.body.content_length());
-                        if ( connection.input_buffer().total_expected_size() > _max_request_size )
-                        {
-                            status = httpony::StatusCode::PayloadTooLarge;
-                        }
-                    }
-
-                    request.connection = connection;
-                    respond(request, status);
-                }
-            },
-            [this](io::Connection& connection, const OperationStatus& status){
-                error(connection, status);
-            },
-            [this]{
-                return create_connection();
+        if ( stream.timed_out() )
+        {
+            status = StatusCode::RequestTimeout;
+        }
+        else if ( request.body.has_data() )
+        {
+            connection.input_buffer().expect_input(request.body.content_length());
+            if ( connection.input_buffer().total_expected_size() > _max_request_size )
+            {
+                status = httpony::StatusCode::PayloadTooLarge;
             }
-        );
-        _listen_address = connect_address;
-    });
+        }
+
+        request.connection = connection;
+        respond(request, status);
+    }
+}
+
+void Server::run()
+{
+    run_init();
+    run_body();
+}
+
+void Server::run_init()
+{
+    _listen_address = _listen_server.start(_connect_address);
+}
+
+void Server::run_body()
+{
+    _listen_server.run(
+        [this](io::Connection& connection){
+            on_connection(connection);
+        },
+        [this](io::Connection& connection, const OperationStatus& status){
+            error(connection, status);
+        },
+        [this]{
+            return create_connection();
+        }
+    );
+    _listen_address = _connect_address;
 }
 
 void Server::stop()

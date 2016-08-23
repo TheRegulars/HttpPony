@@ -20,7 +20,7 @@
  */
 
 
-#define BOOST_TEST_MODULE HttPony_MimeType
+#define BOOST_TEST_MODULE HttPony_Test
 #include <boost/test/unit_test.hpp>
 #include <boost/test/output_test_stream.hpp>
 
@@ -288,5 +288,4 @@ BOOST_AUTO_TEST_CASE( test_input_move_ctor )
     BOOST_CHECK( other_stream.tellg() == 1 );
     BOOST_CHECK_EQUAL( other_stream.get(), 'e' );
     BOOST_CHECK_EQUAL( other_stream.read_all(true), "Hello\n" );
-
 }
