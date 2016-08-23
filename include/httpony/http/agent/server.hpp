@@ -53,12 +53,14 @@ public:
     /**
      * \brief Runs the server in the current thread
      */
-    void run();
+    bool run();
 
     /**
      * \brief Whether the server has been started
+     * \returns \b false if it failed to run
+     *          (ie: already running on a different thread)
      */
-    bool started() const;
+    bool running() const;
 
     /**
      * \brief Stops the background threads

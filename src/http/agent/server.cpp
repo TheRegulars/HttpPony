@@ -58,7 +58,7 @@ void Server::set_ulimited_request_size()
     set_max_request_size(io::NetworkInputBuffer::unlimited_input());
 }
 
-bool Server::started() const
+bool Server::running() const
 {
     return _thread.joinable() || _listen_server.running();
 }
@@ -100,10 +100,15 @@ void Server::on_connection(io::Connection& connection)
     }
 }
 
-void Server::run()
+bool Server::run()
 {
-    run_init();
-    run_body();
+    if ( !running() )
+    {
+        run_init();
+        run_body();
+        return true;
+    }
+    return false;
 }
 
 void Server::run_init()
@@ -129,10 +134,11 @@ void Server::run_body()
 
 void Server::stop()
 {
-    if ( started() )
+    if ( running() )
     {
         _listen_server.stop();
-        _thread.join();
+        if ( _thread.joinable() )
+            _thread.join();
     }
 }
 
