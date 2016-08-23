@@ -18,6 +18,7 @@
 example(hello_server)
 example(simple_server)
 example(server_upload)
+example(thread_pool)
 
 
 set(Boot_FOUND ON)

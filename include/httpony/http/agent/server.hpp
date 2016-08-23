@@ -22,6 +22,10 @@
 #ifndef HTTPONY_SERVER_HPP
 #define HTTPONY_SERVER_HPP
 
+/// \cond
+#include <queue>
+/// \endcond
+
 #include "httpony/io/basic_server.hpp"
 #include "httpony/http/response.hpp"
 
@@ -136,6 +140,8 @@ protected:
         return send(connection, response);
     }
 
+    virtual void on_connection(io::Connection& connection);
+
 private:
     /**
      * \brief Creates a new connection object
@@ -166,8 +172,6 @@ private:
         std::ostream& output
     ) const;
 
-    virtual void on_connection(io::Connection& connection);
-
     void run_init();
     void run_body();
 
@@ -178,6 +182,271 @@ private:
     std::size_t _max_request_size = io::NetworkInputBuffer::unlimited_input();
     std::thread _thread;
 };
+
+/**
+ * \brief Handles incoming requests in different threads
+ * \todo Throttle when the queue starts growing too much
+ */
+template<class ServerT>
+class BasicPooledServer : public ServerT
+{
+    static_assert(std::is_base_of<Server, ServerT>::value, "Server class expected");
+public:
+
+    template<class... Args>
+        BasicPooledServer(std::size_t pool_size, Args&&... args)
+            : ServerT(std::forward<Args>(args)...)
+        {
+            resize_pool(pool_size);
+        }
+
+    ~BasicPooledServer()
+    {
+        do_resize_pool(0);
+    }
+
+    /**
+     * \brief Blocks until all pending connections have been processed
+     *        (And prevents new connections from coming through)
+     * \note Cannot be called from a thread spawned by the pool
+     */
+    void wait()
+    {
+        if ( in_pool() )
+            throw std::logic_error("Cannot call BasicPooledServer::wait inside a pooled thread");
+
+        auto lock = lock_queue();
+        pause = true;
+        lock.unlock();
+
+        do_wait(true);
+
+        lock.lock();
+        pause = false;
+    }
+
+    /**
+     * \brief Resizes the thread pool
+     * \note Cannot be called from a thread spawned by the pool
+     */
+    void resize_pool(std::size_t n)
+    {
+        if ( n == 0 )
+            throw std::logic_error("Thread pool must not be empty");
+        if ( in_pool() )
+            throw std::logic_error("Cannot call BasicPooledServer::resize_pool inside a pooled thread");
+        do_resize_pool(n);
+    }
+
+    /**
+     * \brief Number of threads in the pool
+     */
+    std::size_t pool_size() const
+    {
+        auto lock = lock_queue();
+        return queue.size();
+    }
+
+private:
+    void on_connection(io::Connection& connection) override
+    {
+        auto lock = lock_queue();
+        queue.push(connection);
+        lock.unlock();
+        handle_queue();
+    }
+
+    /**
+     * \brief Goes through the available threads and starts processing queued
+     *        connections
+     */
+    void handle_queue()
+    {
+        auto queue_lock = lock_queue();
+        if ( queue.empty() )
+            return;
+
+        std::size_t index = 0;
+        for ( auto& thread : threads )
+        {
+            auto thread_lock = lock_thread(index);
+
+            if ( thread.joinable() && !running[index] )
+                thread.join();
+
+            if ( !running[index] )
+            {
+                running[index] = true;
+                auto connection = queue.front();
+                queue.pop();
+                thread = std::thread([this, connection, index]() {
+                    thread_run(index, connection);
+                });
+
+                if ( queue.empty() )
+                    return;
+            }
+
+            index++;
+        }
+    }
+
+    /**
+     * \brief Whether the function is being called from within a thread of the pool
+     */
+    bool in_pool() const
+    {
+        for ( const std::thread& thread : threads )
+        {
+            if ( std::this_thread::get_id() == thread.get_id() )
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * \brief Acquire a lock on the thread mutex by index
+     */
+    std::unique_lock<std::mutex> lock_thread(std::size_t index)
+    {
+        if ( index >= threads.size() )
+            throw std::runtime_error("Trying to lock non-existing thread");
+        return std::unique_lock<std::mutex>(mutexes[index]);
+    }
+
+    /**
+     * \brief Lock the queue
+     */
+    std::unique_lock<std::mutex> lock_queue()
+    {
+        return std::unique_lock<std::mutex>(mutex_queue);
+    }
+
+    /**
+     * \brief Lock the queue and all thread mutexes
+     */
+    std::list<std::unique_lock<std::mutex>> lock_all()
+    {
+        std::list<std::unique_lock<std::mutex>> locks;
+        locks.emplace_back(mutex_queue);
+        for ( auto& mutex : mutexes )
+        {
+           locks.emplace_back(mutex);
+        }
+        return locks;
+    }
+
+    /**
+     * \brief Function called by the threads
+     */
+    void thread_run(std::size_t thread_index, io::Connection connection)
+    {
+        thread_start(thread_index, connection);
+        do
+        {
+            this->ServerT::on_connection(connection);
+
+            if ( !pause )
+            {
+                std::unique_lock<std::mutex> lock(mutex_queue, std::try_to_lock);
+                if ( lock.owns_lock() && !pause && !queue.empty() )
+                {
+                    connection = queue.front();
+                    queue.pop();
+                    thread_continue(thread_index, connection);
+                    continue;
+                }
+            }
+        }
+        while ( false );
+
+        running[thread_index] = false;
+
+        thread_stop(thread_index);
+    }
+
+    /**
+     * \brief Unchecked resize for internal use
+     */
+    void do_resize_pool(std::size_t n)
+    {
+        auto lock = lock_all();
+        pause = true;
+        do_wait(false);
+        threads.resize(n);
+        running = std::vector<std::atomic<bool>>(n);
+        mutexes = std::vector<std::mutex>(n);
+        pause = false;
+    }
+
+    /**
+     * \brief Unchecked wait for internal use
+     */
+    void do_wait(bool lock)
+    {
+        std::size_t index = 0;
+        for ( auto& thread : threads )
+        {
+            std::unique_lock<std::mutex> lock;
+            if ( lock )
+                lock = lock_thread(index);
+            if ( thread.joinable() )
+                thread.join();
+            index++;
+        }
+    }
+
+    /**
+     * \brief Called when a thread is spawned
+     */
+    virtual void thread_start(std::size_t index, io::Connection& connection)
+    {
+    }
+
+    /**
+     * \brief Called when a thread picks up a new connection
+     */
+    virtual void thread_continue(std::size_t index, io::Connection& connection)
+    {
+    }
+
+    /**
+     * \brief Called right before a thread exits
+     */
+    virtual void thread_stop(std::size_t index)
+    {
+    }
+
+    /**
+     * \brief mutex protecting the queue
+     */
+    std::mutex mutex_queue;
+    /**
+     * \brief Queue of incoming connections to be processed
+     * \note protected by mutex_queue
+     */
+    std::queue<io::Connection> queue;
+    /**
+     * \brief Whether the queue should be temporarily paused
+     * \note protected by mutex_queue
+     */
+    bool pause = false;
+    /**
+     * \brief Thread pool
+     */
+    std::vector<std::thread> threads;
+    /**
+     * \brief Indicates whether each thread is running
+     */
+    std::vector<std::atomic<bool>> running;
+    /**
+     * \brief A mutex for each thread in the pool to synchronize creations and joins
+     */
+    std::vector<std::mutex> mutexes;
+};
+
+
+using PooledServer = BasicPooledServer<Server>;
 
 } // namespace httpony
 #endif // HTTPONY_SERVER_HPP

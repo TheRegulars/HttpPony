@@ -211,8 +211,8 @@ void Server::process_log_format(
             else // canonical
                 output << _listen_address.port;
             break;
-        case 'P': // The process ID or thread id of the child that serviced the request. Valid formats are pid, tid, and hextid.
-            // TODO ?
+        case 'P': // The process ID or thread id of the child that serviced the request.
+            output << std::this_thread::get_id();
             break;
         case 'q': // The query string (prepended with a ? if a query string exists, otherwise an empty string)
             output << request.uri.query_string(true);
