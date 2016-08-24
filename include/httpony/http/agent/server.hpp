@@ -445,8 +445,55 @@ private:
     std::vector<std::mutex> mutexes;
 };
 
-
 using PooledServer = BasicPooledServer<Server>;
+
+/**
+ * \brief Calls a functor on incoming requests
+ */
+template<
+    class ServerT,
+    class RequestFunctor = std::function<void (Request&, const Status&)>,
+    class ErrorFunctor = std::function<void (io::Connection&, const OperationStatus&)>
+>
+class ClosureServer : public ServerT
+{
+public:
+    template<class... Args>
+        ClosureServer(
+            RequestFunctor request_functor,
+            ErrorFunctor error_functor,
+            Args&&... args)
+    : ServerT(std::forward<Args>(args)...),
+      request_functor(std::move(request_functor)),
+      error_functor(std::move(error_functor))
+    {}
+
+    template<class... Args>
+        ClosureServer(
+            RequestFunctor request_functor,
+            Args&&... args)
+    : ClosureServer(
+        std::forward<RequestFunctor>(request_functor),
+        {},
+        std::forward<Args>(args)...
+    )
+    {}
+
+    void respond(Request& request, const Status& status)
+    {
+        melanolib::callback(request_functor, request, status);
+    }
+
+protected:
+    void error(io::Connection& connection, const OperationStatus& what) const
+    {
+        melanolib::callback(error_functor, connection, what);
+    }
+
+private:
+    RequestFunctor request_functor;
+    ErrorFunctor error_functor;
+};
 
 } // namespace httpony
 #endif // HTTPONY_SERVER_HPP

@@ -63,7 +63,7 @@ protected:
 
             httpony::Response response(request.protocol);
             response.body.start_output("text/plain");
-            response.body << "Hello world!";
+            response.body << "Hello world!\n";
             return response;
         }
         catch ( const std::exception& )
