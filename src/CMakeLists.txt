@@ -32,7 +32,12 @@ uri.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
-add_library(${LIBRARY_NAME} ${SOURCES})
+OPTION(HTTPONY_SHARED "Compile HttPony as a shared library" ON)
+if(HTTPONY_SHARED)
+    add_library(${LIBRARY_NAME} SHARED ${SOURCES})
+else()
+    add_library(${LIBRARY_NAME} STATIC ${SOURCES})
+endif()
 
 
 find_package (Boost COMPONENTS system thread REQUIRED)
