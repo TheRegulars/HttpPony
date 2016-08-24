@@ -68,7 +68,7 @@ public:
         return std::move(connection);
     }
 
-    OperationStatus query(Request& request, Response& response)
+    OperationStatus query(Request&& request, Response& response)
     {
         OperationStatus status;
         auto connection = connect(request.uri, status);
