@@ -278,3 +278,9 @@ BOOST_AUTO_TEST_CASE( test_uri_full )
     BOOST_CHECK( Uri({"scheme", "authority", {"path"}, {}, "fragment"}).full() == "scheme://authority/path#fragment" );
     BOOST_CHECK( Uri({"scheme", "authority", {"path"}, {{"query", ""}}, ""}).full() == "scheme://authority/path?query" );
 }
+
+BOOST_AUTO_TEST_CASE( test_uri_ctor_simple )
+{
+    BOOST_CHECK( Uri("http://example.com", {{"foo", "bar"}}).full() == "http://example.com?foo=bar" );
+    BOOST_CHECK( Uri("http://example.com", {{"foo", "bar"}}, "frag").full() == "http://example.com?foo=bar#frag" );
+}

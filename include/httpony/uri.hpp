@@ -306,8 +306,8 @@ struct Uri
         std::string fragment = ""
     ) : Uri(base)
     {
-        query = std::move(query);
-        fragment = std::move(fragment);
+        this->query = std::move(query);
+        this->fragment = std::move(fragment);
     }
 
     Uri(
