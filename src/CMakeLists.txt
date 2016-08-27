@@ -32,7 +32,6 @@ uri.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
-OPTION(HTTPONY_SHARED "Compile HttPony as a shared library" ON)
 if(HTTPONY_SHARED)
     add_library(${LIBRARY_NAME} SHARED ${SOURCES})
 else()

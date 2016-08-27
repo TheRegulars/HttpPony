@@ -53,6 +53,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
+option(HTTPONY_SHARED "Compile HttPony as a shared library" ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_MELANO_LIBS ${HTTPONY_SHARED})
+
 
 include_directories("lib/Melanolib/include/")
 include_directories(include)
