@@ -37,6 +37,7 @@ bool InputContentStream::start_input(std::streambuf* buffer, const Headers& head
     std::string length = headers.get("Content-Length");
     std::string content_type = headers.get("Content-Type");
 
+    /// \see https://tools.ietf.org/html/rfc7230#section-4.1
     if ( !headers.contains("Content-Length") && headers.get("Transfer-Encoding") == "chunked" )
     {
         /// \todo Support multiple chunks
