@@ -107,7 +107,10 @@ struct Response
             else if ( input.method == "HEAD" )
             {
                 headers["Content-Type"] = body.content_type().string();
-                headers["Content-Length"] = std::to_string(body.content_length());
+                if ( headers.contains("Transfer-Encoding") )
+                    headers.erase("Transfer-Encoding");
+                else
+                    headers["Content-Length"] = std::to_string(body.content_length());
                 body.stop_output();
             }
         }

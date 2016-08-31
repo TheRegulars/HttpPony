@@ -234,7 +234,8 @@ private:
             if ( !response.headers.contains("Content-Type") )
                 header(stream, "Content-Type", response.body.content_type());
             
-            if ( !response.headers.contains("Content-Length") )
+            if ( !response.headers.contains("Content-Length") &&
+                 !response.headers.contains("Transfer-Encoding") )
                 header(stream, "Content-Length", response.body.content_length());
         }
 
@@ -285,7 +286,8 @@ private:
             if ( !request.headers.contains("Content-Type") )
                 header(stream, "Content-Type", request.body.content_type());
 
-            if ( !request.headers.contains("Content-Length") )
+            if ( !request.headers.contains("Content-Length") &&
+                 !request.headers.contains("Transfer-Encoding") )
                 header(stream, "Content-Length", request.body.content_length());
         }
 

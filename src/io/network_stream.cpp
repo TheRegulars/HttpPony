@@ -34,11 +34,38 @@ bool InputContentStream::start_input(std::streambuf* buffer, const Headers& head
 {
     rdbuf(buffer);
 
-    /// \todo handle Transfer-Encoding
     std::string length = headers.get("Content-Length");
     std::string content_type = headers.get("Content-Type");
 
-    if ( length.empty() || !std::isdigit(length[0]) || content_type.empty() )
+    if ( !headers.contains("Content-Length") && headers.get("Transfer-Encoding") == "chunked" )
+    {
+        /// \todo Support multiple chunks
+        *this >> length;
+        if ( length.empty() || !melanolib::string::ascii::is_xdigit(length[0]) )
+        {
+            _error = true;
+        }
+        else
+        {
+            while ( get() != '\n' && !_error )
+            {
+                if ( eof() || fail() )
+                    _error = true;
+            }
+
+            if ( !_error )
+                _content_length = std::stoul(length, nullptr, 16);
+        }
+    }
+    else
+    {
+        if ( length.empty() || !std::isdigit(length[0]) )
+            _error = true;
+        else
+            _content_length = std::stoul(length);
+    }
+
+    if ( _error || content_type.empty() )
     {
         _content_length = 0;
         _content_type = {};
@@ -47,7 +74,6 @@ bool InputContentStream::start_input(std::streambuf* buffer, const Headers& head
         return false;
     }
 
-    _content_length = std::stoul(length);
     _content_type = std::move(content_type);
 
     _error = false;

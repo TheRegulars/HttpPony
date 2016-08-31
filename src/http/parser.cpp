@@ -62,7 +62,8 @@ Status Http1Parser::request(std::istream& stream, Request& request) const
     if ( request.headers.contains("User-Agent") )
         request.user_agent = request.headers.get("User-Agent");
 
-    if ( request.headers.contains("Content-Length") )
+    if ( request.headers.contains("Content-Length") ||
+         request.headers.contains("Transfer-Encoding") )
     {
         if ( !request.body.start_input(stream.rdbuf(), request.headers) )
             return StatusCode::BadRequest;
@@ -71,10 +72,6 @@ Status Http1Parser::request(std::istream& stream, Request& request) const
         {
             return StatusCode::Continue;
         }
-    }
-    else if ( request.headers.contains("Transfer-Encoding") )
-    {
-        return StatusCode::NotImplemented;
     }
     else if ( !stream.eof() && stream.peek() != std::istream::traits_type::eof() )
     {
@@ -120,14 +117,11 @@ OperationStatus Http1Parser::response(std::istream& stream, Response& response) 
 
     /// \todo Parse www-authenticate
 
-    if ( response.headers.contains("Content-Length") )
+    if ( response.headers.contains("Content-Length") ||
+         response.headers.contains("Transfer-Encoding") )
     {
         if ( !response.body.start_input(stream.rdbuf(), response.headers) )
             return "invalid payload";
-    }
-    else if ( response.headers.contains("Transfer-Encoding") )
-    {
-        return "not implemented";
     }
 
     return {};
