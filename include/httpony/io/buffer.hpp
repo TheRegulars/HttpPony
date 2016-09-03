@@ -68,7 +68,9 @@ public:
      */
     void expect_input(std::size_t byte_count)
     {
-        if ( byte_count > size() )
+        if ( byte_count == unlimited_input() )
+            expect_unlimited_input();
+        else if ( byte_count > size() )
             _expected_input = byte_count - size();
         else
             _expected_input = 0;
