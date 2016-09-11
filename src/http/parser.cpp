@@ -73,10 +73,6 @@ Status Http1Parser::request(std::istream& stream, Request& request) const
             return StatusCode::Continue;
         }
     }
-    else if ( !stream.eof() && stream.peek() != std::istream::traits_type::eof() )
-    {
-        return StatusCode::LengthRequired;
-    }
 
     if ( request.protocol < Protocol::http_1_1 && request.headers.contains("Expect") )
     {
