@@ -147,7 +147,7 @@ protected:
 
             if ( _expected_input == unlimited_input() )
             {
-                if ( read_size <= request_size )
+                if ( read_size < request_size )
                     _expected_input = 0;
             }
             else
