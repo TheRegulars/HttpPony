@@ -41,6 +41,9 @@ public:
         if ( status.error() )
             return status;
 
+        if ( endpoint_iterator ==  boost_tcp::resolver::iterator{} )
+            return "Could not resolve " + target.authority.full();
+
         return connection.socket().connect(endpoint_iterator);
     }
 

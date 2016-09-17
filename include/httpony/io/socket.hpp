@@ -307,7 +307,7 @@ public:
         const boost_tcp::resolver::query& query,
         OperationStatus& status)
     {
-        boost::system::error_code error;
+        boost::system::error_code error = boost::asio::error::would_block;
         boost_tcp::resolver::iterator result;
         resolver.async_resolve(
             query,
@@ -433,7 +433,7 @@ private:
         OperationStatus& status
     )
     {
-        boost::system::error_code error;
+        boost::system::error_code error = boost::asio::error::would_block;;
         std::size_t read_size;
 
         ((*_socket).*func)(buffer, SocketWrapper::AsyncCallback(error, read_size));
