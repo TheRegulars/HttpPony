@@ -26,6 +26,7 @@
 #include <vector>
 #include <type_traits>
 
+#include <melanolib/string/stringutils.hpp>
 #include <melanolib/utils/c++-compat.hpp>
 /// \endcond
 
@@ -280,9 +281,13 @@ public:
 
     void print(std::ostream& out, const Indentation& indent) const override
     {
+        static std::unordered_map<std::string, std::string> replacements{
+            {"\"", "&quot;"},
+            {"&", "&amp;"}
+        };
         indent.indent(out, Indentation::Attribute);
-        /// \todo Escape special characters
-        out << _name << "='" << _value << '\'';
+        out << _name << "=\"" <<
+            melanolib::string::replace(_value, replacements) << '\"';
     }
 
     bool is_attribute() const override
@@ -545,6 +550,65 @@ public:
 
 public:
     Attribute* _value;
+};
+
+class Select : public Element
+{
+public:
+    template<class... Args>
+    Select(const std::string& name, Args&&... args)
+        : Element(
+            "select",
+            std::forward<Args>(args)...
+        )
+    {
+        if ( !name.empty() )
+        {
+            append(Attribute{"name", name});
+            append(Attribute{"id", name});
+        }
+    }
+};
+
+class Option : public Element
+{
+public:
+    template<class... Args>
+    Option(const std::string& value, bool selected = false,
+           bool disabled = false, Args&&... args)
+        : Element("option", std::forward<Args>(args)...)
+    {
+        if ( selected )
+            append(Attribute{"selected", "selected"});
+
+        if ( disabled )
+            append(Attribute{"disabled", "disabled"});
+
+        if ( sizeof...(Args) == 0 )
+            append(Text(value));
+        else
+            append(Attribute{"value", value});
+    }
+};
+
+class TextArea : public Element
+{
+public:
+    template<class... Args>
+    TextArea(const std::string& name, std::size_t cols = 80, std::size_t rows = 24, Args&&... args)
+        : Element(
+            "textarea",
+            Attribute{"cols", std::to_string(cols)},
+            Attribute{"rows", std::to_string(rows)},
+            std::forward<Args>(args)...
+        )
+    {
+        if ( !name.empty() )
+        {
+            append(Attribute{"name", name});
+            append(Attribute{"id", name});
+        }
+    }
 };
 
 class Label : public BlockElement
