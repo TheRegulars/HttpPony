@@ -393,7 +393,7 @@ bool Http1Parser::auth(const std::string& header_contents, Auth& auth) const
 
     auth.auth_string = stream.get_until(melanolib::string::ascii::is_space);
 
-    if ( !header_parameters(stream, auth.parameters) );
+    if ( !header_parameters(stream, auth.parameters) )
         return false;
 
     auth.realm = auth.parameters.get("realm");
