@@ -53,7 +53,7 @@ void Server::set_max_request_size(std::size_t size)
     _max_request_size = size;
 }
 
-void Server::set_ulimited_request_size()
+void Server::set_unlimited_request_size()
 {
     set_max_request_size(io::NetworkInputBuffer::unlimited_input());
 }

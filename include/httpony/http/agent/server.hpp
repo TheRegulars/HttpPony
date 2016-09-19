@@ -91,7 +91,7 @@ public:
      * If you want to restrict only the payload, leave this to unlimited and
      * check the content_length of the request body.
      *
-     * \see set_ulimited_request_size(), max_request_size()
+     * \see set_unlimited_request_size(), max_request_size()
      */
     void set_max_request_size(std::size_t size);
 
@@ -99,7 +99,7 @@ public:
      * \brief Removes max request limits (this is the default)
      * \see set_max_request_size(), max_request_size()
      */
-    void set_ulimited_request_size();
+    void set_unlimited_request_size();
 
     std::size_t max_request_size() const;
 
