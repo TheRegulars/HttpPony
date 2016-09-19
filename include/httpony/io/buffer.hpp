@@ -45,36 +45,12 @@ public:
     /**
      * \brief Reads up to size from the socket
      */
-    std::size_t read_some(std::size_t size, OperationStatus& status)
-    {
-        auto prev_size = this->size();
-        if ( size <= prev_size )
-            return size;
-        size -= prev_size;
-
-        auto in_buffer = prepare(size);
-
-        auto read_size = _socket.read_some(in_buffer, status);
-
-        _total_read_size += read_size;
-
-        commit(read_size);
-
-        return read_size + prev_size;
-    }
+    std::size_t read_some(std::size_t size, OperationStatus& status);
 
     /**
      * \brief Expect at least \p byte_count to be available in the socket.
      */
-    void expect_input(std::size_t byte_count)
-    {
-        if ( byte_count == unlimited_input() )
-            expect_unlimited_input();
-        else if ( byte_count > size() )
-            _expected_input = byte_count - size();
-        else
-            _expected_input = 0;
-    }
+    void expect_input(std::size_t byte_count);
 
     /**
      * \brief Expect an unspecified of bytes
@@ -135,29 +111,7 @@ public:
     }
 
 protected:
-    int_type underflow() override
-    {
-        int_type ret = boost::asio::streambuf::underflow();
-        if ( ret == traits_type::eof() && _expected_input > 0 )
-        {
-            auto request_size = _expected_input > chunk_size() ?
-                chunk_size() : _expected_input;
-
-            auto read_size = read_some(request_size, _status);
-
-            if ( _expected_input != unlimited_input() )
-            {
-                if ( read_size <= _expected_input )
-                    _expected_input -= read_size;
-                else
-                    /// \todo This should trigger a bad request
-                    _status = "unexpected data in the stream";
-            }
-
-            ret = boost::asio::streambuf::underflow();
-        }
-        return ret;
-    }
+    int_type underflow() override;
 
 private:
 

@@ -284,55 +284,13 @@ public:
         return io_operation(&SocketWrapper::async_write, boost::asio::buffer(buffer), status);
     }
 
-    OperationStatus connect(boost_tcp::resolver::iterator endpoint_iterator)
-    {
-        boost::system::error_code error = boost::asio::error::would_block;
-
-        boost::asio::async_connect(raw_socket(), endpoint_iterator,
-            [this, &error](
-                const boost::system::error_code& error_code,
-                boost_tcp::resolver::iterator endpoint_iterator
-            )
-            {
-                error = error_code;
-            }
-        );
-
-        io_loop(&error);
-
-        return error_to_status(error);
-    }
+    OperationStatus connect(boost_tcp::resolver::iterator endpoint_iterator);
 
     boost_tcp::resolver::iterator resolve(
         const boost_tcp::resolver::query& query,
-        OperationStatus& status)
-    {
-        boost::system::error_code error = boost::asio::error::would_block;
-        boost_tcp::resolver::iterator result;
-        resolver.async_resolve(
-            query,
-            [&error, &result](
-                const boost::system::error_code& error_code,
-                const boost_tcp::resolver::iterator& iterator
-            )
-            {
-                error = error_code;
-                result = iterator;
-            }
-        );
+        OperationStatus& status);
 
-        io_loop(&error);
-
-        status = error_to_status(error);
-        return result;
-    }
-
-    OperationStatus process_async()
-    {
-        boost::system::error_code error;
-        _io_service.run_one(error);
-        return error_to_status(error);
-    }
+    OperationStatus process_async();
 
     bool is_open() const
     {
@@ -444,26 +402,12 @@ private:
         return read_size;
     }
 
-    void io_loop(boost::system::error_code* error)
-    {
-        do
-            _io_service.run_one();
-        while ( !_io_service.stopped() && *error == boost::asio::error::would_block );
-    }
+    void io_loop(boost::system::error_code* error);
 
     /**
      * \brief Async wait for the timeout
      */
-    void check_deadline()
-    {
-        if ( timed_out() )
-        {
-            _deadline.expires_at(boost::posix_time::pos_infin);
-            _io_service.stop();
-        }
-
-        _deadline.async_wait([this](const boost::system::error_code&){check_deadline();});
-    }
+    void check_deadline();
 
     boost::asio::io_service _io_service;
     std::unique_ptr<SocketWrapper> _socket;

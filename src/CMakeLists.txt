@@ -26,7 +26,9 @@ http/post.cpp
 http/protocol.cpp
 http/request.cpp
 http/status.cpp
+io/buffer.cpp
 io/network_stream.cpp
+io/socket.cpp
 mime_type.cpp
 uri.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
