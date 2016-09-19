@@ -23,3 +23,6 @@ target_link_libraries(ssl_client ${OPENSSL_LIBRARIES})
 
 example(ssl_ping_pong)
 target_link_libraries(ssl_ping_pong ${OPENSSL_LIBRARIES})
+
+example(maybe_ssl_server)
+target_link_libraries(maybe_ssl_server ${OPENSSL_LIBRARIES})

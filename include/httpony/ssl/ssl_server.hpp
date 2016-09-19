@@ -33,23 +33,45 @@ namespace ssl {
 class SslServer : public Server
 {
 public:
+    /**
+     * \brief Constructs a server with ssl enabled
+     */
     explicit SslServer(
         io::ListenAddress listen,
         const std::string& cert_file,
         const std::string& key_file,
-        const std::string& dh_file = {}
+        const std::string& dh_file = {},
+        bool ssl_enabled = true
     )
         : Server(std::move(listen)),
-          context(boost_ssl::context::sslv23)
+          context(boost_ssl::context::sslv23),
+          _ssl_enabled(ssl_enabled)
     {
-        context.set_password_callback([this]
-            (std::size_t max_length, boost_ssl::context::password_purpose purpose)
-            { return password(); }
-        );
-        context.use_certificate_chain_file(cert_file);
-        context.use_private_key_file(key_file, boost::asio::ssl::context::pem);
-        if ( !dh_file.empty() )
-            context.use_tmp_dh_file(dh_file);
+        if ( ssl_enabled )
+        {
+            context.set_password_callback([this]
+                (std::size_t max_length, boost_ssl::context::password_purpose purpose)
+                { return password(); }
+            );
+            context.use_certificate_chain_file(cert_file);
+            context.use_private_key_file(key_file, boost::asio::ssl::context::pem);
+            if ( !dh_file.empty() )
+                context.use_tmp_dh_file(dh_file);
+        }
+    }
+
+    /**
+     * \brief Constructs a server with ssl disabled
+     */
+    explicit SslServer(io::ListenAddress listen)
+        : Server(std::move(listen)),
+          context(boost_ssl::context::sslv23),
+          _ssl_enabled(false)
+    {}
+
+    bool ssl_enabled() const
+    {
+        return _ssl_enabled;
     }
 
     /**
@@ -66,7 +88,9 @@ private:
      */
     io::Connection create_connection() final
     {
-        return io::Connection(io::SocketTag<SslSocket>{}, context);
+        if ( _ssl_enabled )
+            return io::Connection(io::SocketTag<SslSocket>{}, context);
+        return io::Connection(io::SocketTag<io::PlainSocket>{});
     }
 
     /**
@@ -74,6 +98,9 @@ private:
      */
     OperationStatus accept(io::Connection& connection) final
     {
+        if ( !_ssl_enabled )
+            return {};
+
         SslSocket& socket = socket_cast(connection.socket());
 
         auto status = socket.handshake(false);
@@ -93,6 +120,7 @@ private:
     }
 
     boost_ssl::context context;
+    bool _ssl_enabled = true;
 };
 
 } // namespace ssl
