@@ -42,6 +42,7 @@ bool InputContentStream::start_input(std::streambuf* buffer, const Headers& head
     {
         /// \todo Support multiple chunks
         *this >> length;
+
         if ( length.empty() || !melanolib::string::ascii::is_xdigit(length[0]) )
         {
             _error = true;

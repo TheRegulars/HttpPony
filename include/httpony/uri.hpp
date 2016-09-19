@@ -115,6 +115,9 @@ public:
         data.clear();
     }
 
+    const_reference operator[](size_type pos) const { return data[pos]; }
+    reference operator[](size_type pos) { return data[pos]; }
+
 // Extra ctors
     Path(const_reference path, bool url_decode = false)
     {

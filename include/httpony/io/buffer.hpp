@@ -140,17 +140,12 @@ protected:
         int_type ret = boost::asio::streambuf::underflow();
         if ( ret == traits_type::eof() && _expected_input > 0 )
         {
-            auto request_size = _expected_input == unlimited_input() ?
+            auto request_size = _expected_input > chunk_size() ?
                 chunk_size() : _expected_input;
 
             auto read_size = read_some(request_size, _status);
 
-            if ( _expected_input == unlimited_input() )
-            {
-                if ( read_size <= request_size )
-                    _expected_input = 0;
-            }
-            else
+            if ( _expected_input != unlimited_input() )
             {
                 if ( read_size <= _expected_input )
                     _expected_input -= read_size;

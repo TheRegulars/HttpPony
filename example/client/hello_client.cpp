@@ -36,13 +36,12 @@ int main(int argc, char** argv)
     httpony::Client client;
 
     httpony::Response response;
-    httpony::Request request("GET", url);
 
-    auto status = client.query(request, response);
+    auto status = client.query(httpony::Request("GET", url), response);
     if ( status )
         print_response(response);
     else
-        std::cerr << "Error accessing " << request.uri.full() << ": " << status.message() << std::endl;
+        std::cerr << "Error accessing " << url << ": " << status.message() << std::endl;
 
     return 0;
 }

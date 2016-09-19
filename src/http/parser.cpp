@@ -73,10 +73,6 @@ Status Http1Parser::request(std::istream& stream, Request& request) const
             return StatusCode::Continue;
         }
     }
-    else if ( !stream.eof() && stream.peek() != std::istream::traits_type::eof() )
-    {
-        return StatusCode::LengthRequired;
-    }
 
     if ( request.protocol < Protocol::http_1_1 && request.headers.contains("Expect") )
     {
@@ -397,7 +393,7 @@ bool Http1Parser::auth(const std::string& header_contents, Auth& auth) const
 
     auth.auth_string = stream.get_until(melanolib::string::ascii::is_space);
 
-    if ( !header_parameters(stream, auth.parameters) );
+    if ( !header_parameters(stream, auth.parameters) )
         return false;
 
     auth.realm = auth.parameters.get("realm");
