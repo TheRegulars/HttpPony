@@ -24,7 +24,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/output_test_stream.hpp>
 
-#include "httpony/quick_xml.hpp"
+#include "httpony/formats/quick_xml.hpp"
 
 using namespace httpony::quick_xml;
 using namespace httpony::quick_xml::html;
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( test_attribute )
     BOOST_CHECK( attribute.value() == "world" );
     boost::test_tools::output_test_stream output;
     output << attribute;
-    BOOST_CHECK( output.is_equal( " hello='world'" ) );
+    BOOST_CHECK( output.is_equal( " hello=\"world\"" ) );
 }
 
 BOOST_AUTO_TEST_CASE( test_attributes )
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( test_attributes )
     BOOST_CHECK( !attributes.is_element() );
     boost::test_tools::output_test_stream output;
     output << attributes;
-    BOOST_CHECK( output.is_equal( " hello='world' foo='bar'" ) );
+    BOOST_CHECK( output.is_equal( " hello=\"world\" foo=\"bar\"" ) );
 }
 
 BOOST_AUTO_TEST_CASE( test_attributes_empty )
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( test_element_attronly )
     Element elem("foo", Attribute{"hello", "world"});
     boost::test_tools::output_test_stream output;
     output << elem;
-    BOOST_CHECK( output.is_equal( "<foo hello='world'/>" ) );
+    BOOST_CHECK( output.is_equal( "<foo hello=\"world\"/>" ) );
 }
 
 BOOST_AUTO_TEST_CASE( test_element_full )
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE( test_element_full )
     Element elem("foo", Attribute{"hello", "world"}, Text{"foo"}, Element{"bar"});
     boost::test_tools::output_test_stream output;
     output << elem;
-    BOOST_CHECK( output.is_equal( "<foo hello='world'>foo<bar/></foo>" ) );
+    BOOST_CHECK( output.is_equal( "<foo hello=\"world\">foo<bar/></foo>" ) );
 }
 
 BOOST_AUTO_TEST_CASE( test_block_element_full )
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( test_block_element_full )
     BlockElement elem("foo",  Text{"foo"}, Attribute{"hello", "world"}, Element{"bar"});
     boost::test_tools::output_test_stream output;
     output << elem;
-    BOOST_CHECK( output.is_equal( "<foo hello='world'>foo<bar/></foo>" ) );
+    BOOST_CHECK( output.is_equal( "<foo hello=\"world\">foo<bar/></foo>" ) );
 }
 
 HtmlDocument html_document()
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE( test_html_document )
         "<head><title>Hello</title></head>"
         "<body>"
         "<!--This is an example-->"
-        "<p id='content' class='main'>hello world</p>"
+        "<p id=\"content\" class=\"main\">hello world</p>"
         "</body>"
         "</html>"
     ) );
@@ -181,7 +181,7 @@ R"(<!DOCTYPE html>
     </head>
     <body>
         <!--This is an example-->
-        <p id='content' class='main'>hello world</p>
+        <p id="content" class="main">hello world</p>
     </body>
 </html>)"
     ) );
@@ -200,8 +200,8 @@ R"(<!DOCTYPE html>
     <body>
         <!--This is an example-->
         <p
-            id='content'
-            class='main'
+            id="content"
+            class="main"
         >hello world</p>
     </body>
 </html>)"
@@ -223,7 +223,7 @@ R"(<!DOCTYPE html>
         <!--
             This is an example
         -->
-        <p id='content' class='main'>hello world</p>
+        <p id="content" class="main">hello world</p>
     </body>
 </html>)"
     ) );
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE( test_link )
     BOOST_CHECK( link.target() == "/bar" );
     boost::test_tools::output_test_stream output;
     output << link;
-    BOOST_CHECK( output.is_equal( "<a href='/bar'>bar</a>" ) );
+    BOOST_CHECK( output.is_equal( "<a href=\"/bar\">bar</a>" ) );
 }
 
 BOOST_AUTO_TEST_CASE( test_input )
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE( test_input )
     BOOST_CHECK( input.value() == "world" );
     boost::test_tools::output_test_stream output;
     output << input;
-    BOOST_CHECK( output.is_equal( "<input type='text' name='name' id='name' value='world'/>" ) );
+    BOOST_CHECK( output.is_equal( "<input type=\"text\" name=\"name\" id=\"name\" value=\"world\"/>" ) );
 }
 
 BOOST_AUTO_TEST_CASE( test_label )
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE( test_label )
     BOOST_CHECK( label.target() == "username" );
     boost::test_tools::output_test_stream output;
     output << label;
-    BOOST_CHECK( output.is_equal( "<label for='username'>Name</label>" ) );
+    BOOST_CHECK( output.is_equal( "<label for=\"username\">Name</label>" ) );
 }
 
 

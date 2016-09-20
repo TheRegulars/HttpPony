@@ -61,6 +61,7 @@ if (BUILD_TESTING)
     target_link_libraries(test_protocol ${COMMON_LIBRARIES})
 
     melanotest(test_quick_xml)
+    target_link_libraries(test_quick_xml ${COMMON_LIBRARIES})
 
     melanotest(test_multipart)
 
