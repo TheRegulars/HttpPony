@@ -68,4 +68,7 @@ if (BUILD_TESTING)
     melanotest(test_streams)
     target_link_libraries(test_streams ${COMMON_LIBRARIES})
 
+    melanotest(test_json)
+    target_link_libraries(test_json ${COMMON_LIBRARIES})
+
 endif()

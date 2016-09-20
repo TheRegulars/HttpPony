@@ -28,6 +28,7 @@
 #include "httpony/http/post/form_data.hpp"
 #include "httpony/http/post/urlencoded.hpp"
 #include "httpony/base_encoding.hpp"
-#include "httpony/quick_xml.hpp"
+#include "httpony/formats/quick_xml.hpp"
+#include "httpony/formats/json.hpp"
 
 #endif // HTTPONY_HPP
