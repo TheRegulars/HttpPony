@@ -29,7 +29,7 @@
 class SimpleServer : public httpony::Server
 {
 public:
-    explicit SimpleServer(httpony::io::ListenAddress listen)
+    explicit SimpleServer(const httpony::IPAddress& listen)
         : Server(listen)
     {
         set_timeout(melanolib::time::seconds(16));
@@ -115,18 +115,17 @@ private:
 
 /**
  * The executable accepts an optional command line argument to change the
- * listen port
+ * listen [address][:port]
  */
 int main(int argc, char** argv)
 {
-    uint16_t port = 0;
+    std::string listen = "[::]";
 
     if ( argc > 1 )
-        port = std::stoul(argv[1]);
+        listen = argv[1];
 
-    // This creates a server that listens to both IPv4 and IPv6
-    // on the given port
-    SimpleServer server(port);
+    // This creates a server that listens on the given address
+    SimpleServer server(httpony::IPAddress{listen});
 
     // This starts the server on a separate thread
     server.start();

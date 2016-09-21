@@ -31,7 +31,7 @@
 class ServeFiles : public httpony::Server
 {
 public:
-    explicit ServeFiles(const std::string& path, httpony::io::ListenAddress listen)
+    explicit ServeFiles(const std::string& path, httpony::IPAddress listen)
         : Server(listen), root(path)
     {
         magic_cookie = magic_open(MAGIC_SYMLINK|MAGIC_MIME_TYPE);
@@ -177,20 +177,20 @@ private:
 
 /**
  * The executable accepts two optional command line arguments:
- * the path to the directory to expose and the port number to listen on
+ * the path to the directory to expose and the [address][:port] to listen on
  */
 int main(int argc, char** argv)
 {
     std::string path = "/home";
-    uint16_t port = 0;
+    std::string listen = "[::]";
 
     if ( argc > 1 )
         path = argv[1];
 
     if ( argc > 2 )
-        port = std::stoul(argv[2]);
+        listen = argv[2];
 
-    ServeFiles server(path, port);
+    ServeFiles server(path, httpony::IPAddress{listen});
 
     server.start();
 

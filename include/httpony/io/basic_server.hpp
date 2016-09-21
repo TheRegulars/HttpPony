@@ -32,28 +32,6 @@ namespace httpony {
 namespace io {
 
 /**
- * \brief Address a server shall listen on
- */
-struct ListenAddress : public IPAddress
-{
-    ListenAddress(const IPAddress& ip)
-        : IPAddress(ip)
-    {}
-
-    ListenAddress(Type type, std::string string, uint16_t port)
-        : IPAddress(type, std::move(string), port)
-    {}
-
-    ListenAddress(uint16_t port = 0)
-        : IPAddress(Type::IPv6, "", port)
-    {}
-
-    ListenAddress(Type type, uint16_t port)
-        : IPAddress(type, "", port)
-    {}
-};
-
-/**
  * \brief Low-level server object that listen to a port and
  * calls functor on incoming connections
  */
@@ -65,7 +43,7 @@ public:
      * \note You'll still need to call run() for the server to actually accept
      *       incoming connections
      */
-    ListenAddress start(const ListenAddress& listen)
+    IPAddress start(const IPAddress& listen)
     {
         boost_tcp protocol = listen.type == IPAddress::Type::IPv4 ? boost_tcp::v4() : boost_tcp::v6();
 
@@ -92,7 +70,7 @@ public:
         if ( io_service.stopped() )
             io_service.reset();
 
-        return ListenAddress(SocketWrapper::endpoint_to_ip(acceptor.local_endpoint()));
+        return IPAddress(SocketWrapper::endpoint_to_ip(acceptor.local_endpoint()));
     }
 
     /**

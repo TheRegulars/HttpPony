@@ -23,7 +23,7 @@
 class PingPongServer : public httpony::Server
 {
 public:
-    explicit PingPongServer(httpony::io::ListenAddress listen)
+    explicit PingPongServer(httpony::IPAddress listen)
         : Server(listen)
     {
         set_timeout(melanolib::time::seconds(16));
@@ -150,14 +150,13 @@ protected:
 
 int main(int argc, char** argv)
 {
-    uint16_t port = 0;
+    std::string listen = "[::]";
 
     if ( argc > 1 )
-        port = std::stoul(argv[1]);
+        listen = argv[1];
 
-    // This creates a server that listens to both IPv4 and IPv6
-    // on the given port
-    PingPongServer server(port);
+    // This creates a server that listens on the given address
+    PingPongServer server(httpony::IPAddress{listen});
 
     // This starts the server on a separate thread
     server.start();

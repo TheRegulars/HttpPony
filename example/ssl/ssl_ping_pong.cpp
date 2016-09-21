@@ -24,7 +24,7 @@ class PingPongServer : public httpony::ssl::SslServer
 {
 public:
     explicit PingPongServer(
-        httpony::io::ListenAddress listen,
+        httpony::IPAddress listen,
         const std::string& cert_file,
         const std::string& key_file,
         const std::string& dh_file = {}
@@ -154,13 +154,13 @@ protected:
 
 int main(int argc, char** argv)
 {
-    uint16_t port = 0;
+    std::string listen = "[::]";
     std::string cert_file = "server.pem";
     std::string key_file = "server.key";
     std::string dh_file;
 
     if ( argc > 1 )
-        port = std::stoul(argv[1]);
+        listen = argv[1];
 
     if ( argc > 2 )
         cert_file = argv[2];
@@ -171,10 +171,9 @@ int main(int argc, char** argv)
     if ( argc > 4 )
         dh_file = argv[4];
 
-    // This creates a server that listens to both IPv4 and IPv6
-    // on the given port
+    // This creates a server that listens on the given address
     httpony::Authority sv_auth;
-    PingPongServer server(port, cert_file, key_file, dh_file);
+    PingPongServer server(httpony::IPAddress{listen}, cert_file, key_file, dh_file);
 
     // This starts the server on a separate thread
     server.start();

@@ -30,7 +30,7 @@
 class PooledServer : public httpony::PooledServer
 {
 public:
-    explicit PooledServer(std::size_t pool_size, httpony::io::ListenAddress listen)
+    explicit PooledServer(std::size_t pool_size, httpony::IPAddress listen)
         : httpony::PooledServer(pool_size, listen)
     {
         set_timeout(melanolib::time::seconds(16));
@@ -131,22 +131,21 @@ private:
 
 /**
  * The executable accepts two optional command line arguments:
- * the port number to listen on and the number of threads in the pool
+ * the port number to listen on and the number of threads in the [address][:port]
  */
 int main(int argc, char** argv)
 {
-    uint16_t port = 0;
     std::size_t pool = 3;
+    std::string listen = "[::]";
 
     if ( argc > 1 )
-        port = std::stoul(argv[1]);
+        listen = argv[1];
 
     if ( argc > 2 )
         pool = std::stoul(argv[2]);
 
-    // This creates a server that listens to both IPv4 and IPv6
-    // on the given port
-    PooledServer server(pool, port);
+    // This creates a server that listens on the given address
+    PooledServer server(pool, httpony::IPAddress{listen});
 
     // This starts the server on a separate thread
     server.start();

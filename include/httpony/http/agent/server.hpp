@@ -39,21 +39,21 @@ class Server
 {
 public:
 
-    explicit Server(io::ListenAddress listen);
+    explicit Server(IPAddress listen);
 
     virtual ~Server();
 
     /**
      * \brief Listening address
      */
-    io::ListenAddress listen_address() const;
+    IPAddress listen_address() const;
 
     /**
      * \brief Changes the listening address
      * \note If the server is already running, it will need to be restarted
      *       for this to take in effect.
      */
-    void set_listen_address(const io::ListenAddress& listen);
+    void set_listen_address(const IPAddress& listen);
 
     /**
      * \brief Starts the server in a background thread
@@ -183,8 +183,8 @@ private:
     void run_body();
 
 
-    io::ListenAddress _connect_address;
-    io::ListenAddress _listen_address;
+    IPAddress _connect_address;
+    IPAddress _listen_address;
     io::BasicServer _listen_server;
     std::size_t _max_request_size = io::NetworkInputBuffer::unlimited_input();
     std::thread _thread;

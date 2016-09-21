@@ -28,7 +28,7 @@
 
 namespace httpony {
 
-Server::Server(io::ListenAddress listen_address)
+Server::Server(IPAddress listen_address)
     : _connect_address(std::move(listen_address)),
       _listen_address(_connect_address)
 {}
@@ -38,13 +38,13 @@ Server::~Server()
     stop();
 }
 
-io::ListenAddress Server::listen_address() const
+IPAddress Server::listen_address() const
 {
     /// \todo lock
     return _listen_address;
 }
 
-void Server::set_listen_address(const io::ListenAddress& listen)
+void Server::set_listen_address(const IPAddress& listen)
 {
     /// \todo lock
     _connect_address = listen;

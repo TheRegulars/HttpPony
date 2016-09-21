@@ -23,7 +23,7 @@
 class Server : public httpony::Server
 {
 public:
-    explicit Server(httpony::io::ListenAddress listen)
+    explicit Server(httpony::IPAddress listen)
         : httpony::Server(listen)
     {}
 
@@ -224,18 +224,17 @@ private:
 
 int main(int argc, char** argv)
 {
-    uint16_t port = 0;
+    std::string listen = "[::]";
 
     if ( argc > 1 )
-        port = std::stoul(argv[1]);
+        listen = argv[1];
 
-    // This creates a server that listens to both IPv4 and IPv6
-    // on the given port
-    Server server(port);
+    // This creates a server that listens on the given address
+    Server server(httpony::IPAddress{listen});
 
     // This starts the server on a separate thread
     server.start();
-    port = server.listen_address().port;
+    uint16_t port = server.listen_address().port;
     std::cout << "Server started on port " << port << "\n";
 
     // This starts the client on a separate thread

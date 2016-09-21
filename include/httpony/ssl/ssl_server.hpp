@@ -37,7 +37,7 @@ public:
      * \brief Constructs a server with ssl enabled
      */
     explicit SslServer(
-        io::ListenAddress listen,
+        IPAddress listen,
         const std::string& cert_file,
         const std::string& key_file,
         const std::string& dh_file = {},
@@ -63,7 +63,7 @@ public:
     /**
      * \brief Constructs a server with ssl disabled
      */
-    explicit SslServer(io::ListenAddress listen)
+    explicit SslServer(IPAddress listen)
         : Server(std::move(listen)),
           context(boost_ssl::context::sslv23),
           _ssl_enabled(false)
