@@ -71,4 +71,6 @@ if (BUILD_TESTING)
     melanotest(test_json)
     target_link_libraries(test_json ${COMMON_LIBRARIES})
 
+    melanotest(test_ip_address)
+
 endif()

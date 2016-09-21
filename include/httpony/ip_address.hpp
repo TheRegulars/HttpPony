@@ -26,6 +26,9 @@
 #include <string>
 #include <cstdint>
 #include <ostream>
+#include <algorithm>
+
+#include <melanolib/string/simple_stringutils.hpp>
 /// \endcond
 
 namespace httpony {
@@ -51,6 +54,40 @@ struct IPAddress
         : type(type), string(std::move(string)), port(port)
     {}
 
+    explicit IPAddress(uint16_t port, Type type = Type::IPv6)
+        : type(type), port(port)
+    {}
+
+    explicit IPAddress(const std::string& address, Type default_type = Type::IPv6)
+    {
+        static std::regex ip_regex(
+            "(?:"
+                "((?:[0-9]{1,3}\\.){3}[0-9]{1,3})|"
+                "\\[?((?:[0-9a-fA-F]|::)[0-9a-fA-F:]*)\\]?|"
+                "([^:]*)"
+            ")(?::([0-9]+))?",
+            std::regex::ECMAScript|std::regex::optimize
+        );
+        std::smatch match;
+        if ( std::regex_match(address, match, ip_regex) )
+        {
+            type = default_type;
+
+            if ( match.length(1) )
+            {
+                string = match[1];
+                type = IPAddress::Type::IPv4;
+            }
+            else if ( match.length(2) )
+            {
+                string = match[2];
+                type = IPAddress::Type::IPv6;
+            }
+
+            if ( match.length(4) )
+                port = melanolib::string::to_uint(match[4]);
+        }
+    }
 
     Type type = Type::Invalid;
     std::string string;
