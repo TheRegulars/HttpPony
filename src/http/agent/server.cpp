@@ -40,26 +40,39 @@ Server::~Server()
 
 io::ListenAddress Server::listen_address() const
 {
+    /// \todo lock
     return _listen_address;
+}
+
+void Server::set_listen_address(const io::ListenAddress& listen)
+{
+    /// \todo lock
+    _connect_address = listen;
+    if ( !running() )
+        _listen_address = listen;
 }
 
 std::size_t Server::max_request_size() const
 {
+    /// \todo lock
     return _max_request_size;
 }
 
 void Server::set_max_request_size(std::size_t size)
 {
+    /// \todo lock
     _max_request_size = size;
 }
 
 void Server::set_unlimited_request_size()
 {
+    /// \todo lock
     set_max_request_size(io::NetworkInputBuffer::unlimited_input());
 }
 
 bool Server::running() const
 {
+    /// \todo lock
     return _thread.joinable() || _listen_server.running();
 }
 
@@ -71,6 +84,7 @@ void Server::start()
 
 void Server::on_connection(io::Connection& connection)
 {
+    /// \todo lock, copy _max_request_size and unlock
     if ( accept(connection) )
     {
         /// \todo Switch parser based on protocol
@@ -113,6 +127,7 @@ bool Server::run()
 
 void Server::run_init()
 {
+    /// \todo lock
     _listen_address = _listen_server.start(_connect_address);
 }
 
@@ -129,6 +144,7 @@ void Server::run_body()
             return create_connection();
         }
     );
+    /// \todo lock
     _listen_address = _connect_address;
 }
 
@@ -209,7 +225,7 @@ void Server::process_log_format(
             else if ( argument == "local" )
                 output << request.connection.local_address().port;
             else // canonical
-                output << _listen_address.port;
+                output << listen_address().port;
             break;
         case 'P': // The process ID or thread id of the child that serviced the request.
             output << std::this_thread::get_id();
@@ -307,16 +323,19 @@ void Server::log_response(
 
 void Server::clear_timeout()
 {
+    /// \todo lock
     _listen_server.clear_timeout();
 }
 
 void Server::set_timeout(melanolib::time::seconds timeout)
 {
+    /// \todo lock
     _listen_server.set_timeout(timeout);
 }
 
 melanolib::Optional<melanolib::time::seconds> Server::timeout() const
 {
+    /// \todo lock
     return _listen_server.timeout();
 }
 

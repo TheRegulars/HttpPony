@@ -49,6 +49,13 @@ public:
     io::ListenAddress listen_address() const;
 
     /**
+     * \brief Changes the listening address
+     * \note If the server is already running, it will need to be restarted
+     *       for this to take in effect.
+     */
+    void set_listen_address(const io::ListenAddress& listen);
+
+    /**
      * \brief Starts the server in a background thread
      * \throws runtime_error if it cannot be started
      */
