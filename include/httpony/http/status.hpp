@@ -146,6 +146,21 @@ inline bool operator==(const Status& a, const Status& b)
     return a.code == b.code;
 }
 
+inline bool operator!=(const Status& status, StatusCode code)
+{
+    return status.code != unsigned(code);
+}
+
+inline bool operator!=(StatusCode code, const Status& status)
+{
+    return status.code != unsigned(code);
+}
+
+inline bool operator!=(const Status& a, const Status& b)
+{
+    return a.code != b.code;
+}
+
 inline std::istream& operator>>(std::istream& in, Status& out)
 {
     unsigned numeric_code = 0;
