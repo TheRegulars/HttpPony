@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-cmake_minimum_required(VERSION 2.6)
-cmake_policy(SET CMP0009 NEW)
-cmake_policy(SET CMP0048 NEW)
+cmake_minimum_required(VERSION 3.0)
 
 set(NICE_NAME HttPony)
 project(${NICE_NAME} VERSION 0.1 LANGUAGES CXX)
@@ -67,7 +65,7 @@ endif()
 
 add_subdirectory(example EXCLUDE_FROM_ALL)
 
-if(CMAKE_SOURCE_DIR EQUAL CMAKE_CURRENT_SOURCE_DIR)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # Find all sources for documentation and stuff
     set(ALL_SOURCE_DIRECTORIES src include)
 
