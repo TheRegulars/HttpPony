@@ -41,7 +41,7 @@ struct AuthChallenge
 struct Response
 {
     explicit Response(
-        std::string content_type,
+        const MimeType& content_type,
         Status status = Status(),
         const Protocol& protocol = Protocol::http_1_1
     )
