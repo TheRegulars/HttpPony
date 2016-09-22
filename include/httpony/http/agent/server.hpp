@@ -248,10 +248,10 @@ public:
     /**
      * \brief Number of threads in the pool
      */
-    std::size_t pool_size() const
+    std::size_t pool_size()
     {
         auto lock = lock_queue();
-        return queue.size();
+        return threads.size();
     }
 
 private:
