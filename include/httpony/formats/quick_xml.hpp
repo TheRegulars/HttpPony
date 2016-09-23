@@ -98,13 +98,14 @@ private:
 class Node
 {
 public:
-
     template<class... Args>
     Node(Args&&... args)
     {
         _children.reserve(sizeof...(args));
         append(std::forward<Args>(args)...);
     }
+    Node(const Node&) = default;
+    Node(Node&&) = default;
 
     const std::vector<std::shared_ptr<Node>>& children() const
     {
@@ -640,6 +641,35 @@ public:
 
 public:
     Attribute* _target;
+};
+
+class Table : public BlockElement
+{
+public:
+    template<class... Args>
+        explicit Table(Args&&... args)
+            : BlockElement("table", std::forward<Args>(args)...)
+        {}
+    Table(Table& t) : Table((const Table&)t) {}
+    Table(const Table&) = default;
+    Table(Table&&) = default;
+
+    template<class... Args>
+        void add_data_row(Args&&... args)
+    {
+        append(Element{"tr", Element("td", std::forward<Args>(args))...});
+    }
+
+    template<class... Args>
+        void add_header_row(Args&&... args)
+    {
+        append(Element{"tr", Element("th", std::forward<Args>(args))...});
+    }
+    template<class... Args>
+        void add_row(Args&&... args)
+    {
+        append(Element{"tr", std::forward<Args>(args)...});
+    }
 };
 
 } // namespace html
