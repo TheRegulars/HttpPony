@@ -33,6 +33,18 @@
 namespace httpony {
 namespace quick_xml {
 
+inline std::string amp_escape(const std::string& string)
+{
+    static const std::unordered_map<std::string, std::string> replacements{
+        {"\"", "&quot;"},
+        {"'", "&apos;"},
+        {"&", "&amp;"},
+        {"<", "&lt;"},
+        {">", "&gt;"}
+    };
+    return melanolib::string::replace(string, replacements);
+}
+
 class Indentation
 {
 public:
@@ -282,13 +294,8 @@ public:
 
     void print(std::ostream& out, const Indentation& indent) const override
     {
-        static std::unordered_map<std::string, std::string> replacements{
-            {"\"", "&quot;"},
-            {"&", "&amp;"}
-        };
         indent.indent(out, Indentation::Attribute);
-        out << _name << "=\"" <<
-            melanolib::string::replace(_value, replacements) << '\"';
+        out << _name << "=\"" << amp_escape(_value) << '\"';
     }
 
     bool is_attribute() const override
@@ -344,8 +351,7 @@ public:
 
     void print(std::ostream& out, const Indentation& indent) const override
     {
-        /// \todo Escape special characters
-        out << _contents;
+        out << amp_escape(_contents);
     }
 
 private:
