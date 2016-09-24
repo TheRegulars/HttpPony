@@ -135,6 +135,9 @@ private:
  * (Optional) Generate DH parameters:
  *      openssl dhparam -out dh512.pem 512
  *
+ * (Optional) Generate a PKCS#12 file to load as client cert on a browser:
+ *      openssl pkcs12 -export -inkey server.key -in server.pem -out client.pfx
+ *
  * Since these files are in the PEM format, you can also concatenate them and
  * keep a single file that will work for all three
  */
