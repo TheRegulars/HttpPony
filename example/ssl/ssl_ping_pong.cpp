@@ -172,10 +172,10 @@ int main(int argc, char** argv)
         dh_file = argv[4];
 
     // This creates a server that listens on the given address
-    httpony::Authority sv_auth;
+    // and the server on a separate thread
     PingPongServer server(httpony::IPAddress{listen}, cert_file, key_file, dh_file);
-
-    // This starts the server on a separate thread
+    server.load_cert_authority(cert_file);
+    server.set_verify_mode(true);
     server.start();
     std::cout << "Server started on port " << server.listen_address().port << "\n";
 
@@ -183,6 +183,7 @@ int main(int argc, char** argv)
     PingPongClient client(server.listen_address());
     client.load_cert_authority(cert_file);
     client.set_verify_mode(true);
+    client.set_certificate(cert_file, key_file, dh_file);
     client.start();
     std::cout << "Client started\n";
     client.create_request();

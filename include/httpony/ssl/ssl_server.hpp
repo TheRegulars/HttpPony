@@ -21,7 +21,7 @@
 #ifndef HTTPONY_SSL_SERVER_HPP
 #define HTTPONY_SSL_SERVER_HPP
 
-#include "httpony/ssl/ssl_socket.hpp"
+#include "httpony/ssl/ssl_agent.hpp"
 #include "httpony/http/agent/server.hpp"
 
 namespace httpony {
@@ -30,7 +30,7 @@ namespace ssl {
 /**
  * \brief Base class for SSL-enabled servers
  */
-class SslServer : public Server
+class SslServer : public Server, public SslAgent
 {
 public:
     /**
@@ -41,23 +41,15 @@ public:
         const std::string& cert_file,
         const std::string& key_file,
         const std::string& dh_file = {},
+        const std::string& password_reading = {},
+        const std::string& password_writing = {},
         bool ssl_enabled = true
     )
         : Server(std::move(listen)),
-          context(boost_ssl::context::sslv23),
           _ssl_enabled(ssl_enabled)
     {
         if ( ssl_enabled )
-        {
-            context.set_password_callback([this]
-                (std::size_t max_length, boost_ssl::context::password_purpose purpose)
-                { return password(); }
-            );
-            context.use_certificate_chain_file(cert_file);
-            context.use_private_key_file(key_file, boost::asio::ssl::context::pem);
-            if ( !dh_file.empty() )
-                context.use_tmp_dh_file(dh_file);
-        }
+            set_certificate(cert_file, key_file, dh_file, password_reading, password_writing);
     }
 
     /**
@@ -65,7 +57,6 @@ public:
      */
     explicit SslServer(IPAddress listen)
         : Server(std::move(listen)),
-          context(boost_ssl::context::sslv23),
           _ssl_enabled(false)
     {}
 
@@ -74,23 +65,18 @@ public:
         return _ssl_enabled;
     }
 
-    /**
-     * \brief This should return the password for the encrypted key
-     */
-    virtual std::string password() const
+    bool set_ssl_enabled(bool enabled)
     {
-        return "";
+        if ( !running() )
+            _ssl_enabled = enabled;
+        return _ssl_enabled;
     }
 
+
 private:
-    /**
-     * \brief Creates a connection linked to a SSL socket
-     */
-    io::Connection create_connection() final
+    io::Connection create_connection() override
     {
-        if ( _ssl_enabled )
-            return io::Connection(io::SocketTag<SslSocket>{}, context);
-        return io::Connection(io::SocketTag<io::PlainSocket>{});
+        return SslAgent::create_connection(_ssl_enabled);
     }
 
     /**
@@ -100,26 +86,9 @@ private:
     {
         if ( !_ssl_enabled )
             return {};
-
-        SslSocket& socket = socket_cast(connection.socket());
-
-        auto status = socket.handshake(false);
-
-        if ( status.error() )
-            error(connection, status);
-
-        return status;
+        return handshake(connection.socket(), false);
     }
 
-    /**
-     * We know the socket is a SslSocket because create_connection() is final
-     */
-    static SslSocket& socket_cast(io::TimeoutSocket& in)
-    {
-        return static_cast<SslSocket&>(in.socket_wrapper());
-    }
-
-    boost_ssl::context context;
     bool _ssl_enabled = true;
 };
 

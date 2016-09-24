@@ -22,79 +22,31 @@
 #define HTTPONY_SSL_CLIENT_HPP
 
 #include "httpony/http/agent/client.hpp"
-#include "httpony/ssl/ssl_socket.hpp"
+#include "httpony/ssl/ssl_agent.hpp"
 
 namespace httpony {
 namespace ssl {
 
-class SslClient : public Client
+class SslClient : public Client, public SslAgent
 {
 public:
     template<class... Args>
         SslClient(Args&&... args)
-            : Client(std::forward<Args>(args)...),
-              context(boost_ssl::context::sslv23)
+            : Client(std::forward<Args>(args)...)
         {}
 
-    /**
-     * \brief By default this client won't verify certificates.
-     *
-     * This function enables verification and loads the default authority files.
-     * \see load_cert_authority() to use custom authority files
-     */
-    OperationStatus set_verify_mode(bool verify)
-    {
-        boost::system::error_code error;
-        if ( verify )
-            context.set_default_verify_paths(error);
-        this->verify = verify;
-        return io::error_to_status(error);
-    }
-
-    bool verify_mode() const
-    {
-        return verify;
-    }
-
-    /**
-     * \brief Load a certificate authority file (Which must be in PEM format).
-     *
-     * This by itself only loads the file, you also need to call
-     * set_verify_mode() to enable verification.
-     */
-    OperationStatus load_cert_authority(const std::string& file_name)
-    {
-        boost::system::error_code error;
-        context.load_verify_file(file_name, error);
-        return io::error_to_status(error);
-    }
-
 protected:
-    io::Connection create_connection(const Uri& target) final
+    io::Connection create_connection(const Uri& target) override
     {
-        if ( target.scheme == "https" )
-            return io::Connection(io::SocketTag<SslSocket>{}, context);
-        return io::Connection(io::SocketTag<io::PlainSocket>{});
+        return SslAgent::create_connection(target.scheme == "https");
     }
 
     OperationStatus on_connect(const Uri& target, io::Connection& connection) override
     {
         if ( target.scheme == "https" )
-        {
-            /// \todo dynamic_cast? create_connection() might be best to not be final here
-            SslSocket& socket = static_cast<SslSocket&>(connection.socket().socket_wrapper());
-            /// \todo Async handshake
-            if ( auto status = socket.set_verify_mode(verify) )
-                return socket.handshake(true);
-            else
-                return status;
-        }
-
+            return handshake(connection.socket(), true);
         return {};
     }
-
-    boost_ssl::context context;
-    bool verify = false;
 };
 
 

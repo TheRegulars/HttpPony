@@ -85,33 +85,37 @@ void Server::start()
 void Server::on_connection(io::Connection& connection)
 {
     /// \todo lock, copy _max_request_size and unlock
-    if ( accept(connection) )
+    auto accepted = accept(connection);
+    if ( !accepted )
     {
-        /// \todo Switch parser based on protocol
-        connection.input_buffer().expect_input(_max_request_size);
-
-        auto stream = connection.receive_stream();
-        Request request;
-        Http1Parser parser;
-        auto status = parser.request(stream, request);
-        connection.input_buffer().expect_input(0);
-
-        if ( stream.timed_out() )
-        {
-            status = StatusCode::RequestTimeout;
-        }
-        else if ( request.body.has_data() )
-        {
-            connection.input_buffer().expect_input(request.body.content_length());
-            if ( connection.input_buffer().total_expected_size() > _max_request_size )
-            {
-                status = httpony::StatusCode::PayloadTooLarge;
-            }
-        }
-
-        request.connection = connection;
-        respond(request, status);
+        error(connection, accepted);
+        return;
     }
+
+    /// \todo Switch parser based on protocol
+    connection.input_buffer().expect_input(_max_request_size);
+
+    auto stream = connection.receive_stream();
+    Request request;
+    Http1Parser parser;
+    auto status = parser.request(stream, request);
+    connection.input_buffer().expect_input(0);
+
+    if ( stream.timed_out() )
+    {
+        status = StatusCode::RequestTimeout;
+    }
+    else if ( request.body.has_data() )
+    {
+        connection.input_buffer().expect_input(request.body.content_length());
+        if ( connection.input_buffer().total_expected_size() > _max_request_size )
+        {
+            status = httpony::StatusCode::PayloadTooLarge;
+        }
+    }
+
+    request.connection = connection;
+    respond(request, status);
 }
 
 bool Server::run()

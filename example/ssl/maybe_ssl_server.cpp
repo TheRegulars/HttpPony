@@ -30,14 +30,8 @@
 class MaybeSslHelloServer : public httpony::ssl::SslServer
 {
 public:
-    explicit MaybeSslHelloServer(
-        httpony::IPAddress listen,
-        const std::string& cert_file,
-        const std::string& key_file,
-        const std::string& dh_file,
-        bool ssl_enabled
-    )
-        : SslServer(listen, cert_file, key_file, dh_file, ssl_enabled)
+    explicit MaybeSslHelloServer(httpony::IPAddress listen)
+        : SslServer(listen)
     {
         set_timeout(melanolib::time::seconds(16));
     }
@@ -160,16 +154,20 @@ int main(int argc, char** argv)
         dh_file = argv[4];
 
     bool ssl_enabled = true;
-    if ( cert_file.empty() ||
-         key_file.empty() ||
-         !std::ifstream(cert_file).is_open() ||
-         !std::ifstream(key_file).is_open() )
+    if ( cert_file.empty() || !std::ifstream(cert_file).is_open() ||
+          key_file.empty() || !std::ifstream(key_file).is_open() )
     {
         ssl_enabled = false;
     }
 
     // This creates a server that listens on the given address
-    MaybeSslHelloServer server(httpony::IPAddress{listen}, cert_file, key_file, dh_file, ssl_enabled);
+    MaybeSslHelloServer server(httpony::IPAddress{listen});
+
+    if ( ssl_enabled )
+    {
+        server.set_ssl_enabled(true);
+        server.set_certificate(cert_file, key_file, dh_file);
+    }
 
     // This starts the server on a separate thread
     server.start();
