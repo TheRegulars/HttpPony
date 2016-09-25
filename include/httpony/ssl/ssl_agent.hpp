@@ -78,7 +78,7 @@ public:
         return io::error_to_status(error);
     }
 
-    void set_certificate(
+    OperationStatus set_certificate(
         const std::string& cert_file,
         const std::string& key_file,
         const std::string& dh_file = {},
@@ -86,17 +86,21 @@ public:
         const std::string& password_writing = {}
     )
     {
+        boost::system::error_code error;
         context.set_password_callback([password_reading, password_writing]
             (std::size_t max_length,
              boost_ssl::context::password_purpose purpose) {
                 return purpose == boost::asio::ssl::context_base::for_reading ?
                     password_reading :
                     password_writing;
-        });
-        context.use_certificate_chain_file(cert_file);
-        context.use_private_key_file(key_file, boost::asio::ssl::context::pem);
-        if ( !dh_file.empty() )
-            context.use_tmp_dh_file(dh_file);
+        }, error);
+        if ( !error )
+            context.use_certificate_chain_file(cert_file, error);
+        if ( !error )
+            context.use_private_key_file(key_file, boost::asio::ssl::context::pem, error);
+        if ( !error && !dh_file.empty() )
+            context.use_tmp_dh_file(dh_file, error);
+        return io::error_to_status(error);
     }
 
 protected:
