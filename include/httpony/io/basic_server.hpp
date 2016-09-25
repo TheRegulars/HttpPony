@@ -104,7 +104,7 @@ public:
 
     bool running() const
     {
-        return !io_service.stopped();
+        return !io_service.stopped() && acceptor.is_open();
     }
 
     /**
