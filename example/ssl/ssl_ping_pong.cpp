@@ -23,12 +23,8 @@
 class PingPongServer : public httpony::ssl::SslServer
 {
 public:
-    explicit PingPongServer(
-        httpony::IPAddress listen,
-        const std::string& cert_file,
-        const std::string& key_file,
-        const std::string& dh_file = {}
-    ) : SslServer(listen, cert_file, key_file, dh_file)
+    explicit PingPongServer(httpony::IPAddress listen)
+        : SslServer(listen)
     {
         set_timeout(melanolib::time::seconds(16));
     }
@@ -173,7 +169,8 @@ int main(int argc, char** argv)
 
     // This creates a server that listens on the given address
     // and the server on a separate thread
-    PingPongServer server(httpony::IPAddress{listen}, cert_file, key_file, dh_file);
+    PingPongServer server(httpony::IPAddress{listen});
+    server.set_certificate(cert_file, key_file, dh_file);
     server.load_cert_authority(cert_file);
     server.set_verify_mode(true);
     server.start();

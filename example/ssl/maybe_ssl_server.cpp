@@ -31,7 +31,7 @@ class MaybeSslHelloServer : public httpony::ssl::SslServer
 {
 public:
     explicit MaybeSslHelloServer(httpony::IPAddress listen)
-        : SslServer(listen)
+        : SslServer(listen, false)
     {
         set_timeout(melanolib::time::seconds(16));
     }
@@ -153,17 +153,11 @@ int main(int argc, char** argv)
     if ( argc > 4 )
         dh_file = argv[4];
 
-    bool ssl_enabled = true;
-    if ( cert_file.empty() || !std::ifstream(cert_file).is_open() ||
-          key_file.empty() || !std::ifstream(key_file).is_open() )
-    {
-        ssl_enabled = false;
-    }
-
     // This creates a server that listens on the given address
     MaybeSslHelloServer server(httpony::IPAddress{listen});
 
-    if ( ssl_enabled )
+    if ( cert_file.empty() || !std::ifstream(cert_file).is_open() ||
+         key_file.empty() || !std::ifstream(key_file).is_open() )
     {
         server.set_ssl_enabled(true);
         server.set_certificate(cert_file, key_file, dh_file);
@@ -173,7 +167,7 @@ int main(int argc, char** argv)
     server.start();
 
     std::cout << "Server started on port "<< server.listen_address().port << ", hit enter to quit\n";
-    std::cout << "SSL support has been " << (ssl_enabled ? "enabled" : "disabled") << '\n';
+    std::cout << "SSL support has been " << (server.ssl_enabled() ? "enabled" : "disabled") << '\n';
     // Pause the main thread listening to standard input
     std::cin.get();
     std::cout << "Server stopped\n";

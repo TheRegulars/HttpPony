@@ -33,31 +33,12 @@ namespace ssl {
 class SslServer : public Server, public SslAgent
 {
 public:
-    /**
-     * \brief Constructs a server with ssl enabled
-     */
     explicit SslServer(
         IPAddress listen,
-        const std::string& cert_file,
-        const std::string& key_file,
-        const std::string& dh_file = {},
-        const std::string& password_reading = {},
-        const std::string& password_writing = {},
         bool ssl_enabled = true
     )
         : Server(std::move(listen)),
           _ssl_enabled(ssl_enabled)
-    {
-        if ( ssl_enabled )
-            set_certificate(cert_file, key_file, dh_file, password_reading, password_writing);
-    }
-
-    /**
-     * \brief Constructs a server with ssl disabled
-     */
-    explicit SslServer(IPAddress listen)
-        : Server(std::move(listen)),
-          _ssl_enabled(false)
     {}
 
     bool ssl_enabled() const

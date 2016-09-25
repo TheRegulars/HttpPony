@@ -29,13 +29,8 @@
 class SslHelloServer : public httpony::ssl::SslServer
 {
 public:
-    explicit SslHelloServer(
-        httpony::IPAddress listen,
-        const std::string& cert_file,
-        const std::string& key_file,
-        const std::string& dh_file = {}
-    )
-        : SslServer(listen, cert_file, key_file, dh_file)
+    explicit SslHelloServer(httpony::IPAddress listen)
+        : SslServer(listen)
     {
         set_timeout(melanolib::time::seconds(16));
     }
@@ -161,7 +156,8 @@ int main(int argc, char** argv)
         dh_file = argv[4];
 
     // This creates a server that listens on the given address
-    SslHelloServer server(httpony::IPAddress{listen}, cert_file, key_file, dh_file);
+    SslHelloServer server(httpony::IPAddress{listen});
+    server.set_certificate(cert_file, key_file, dh_file);
 
     // This starts the server on a separate thread
     server.start();
