@@ -97,6 +97,49 @@ public:
         return io::error_to_status(error);
     }
 
+    /**
+     * \brief Retrieves the common name of the verified certificate (if any)
+     */
+    httpony::OperationStatus get_cert_common_name(std::string& output)
+    {
+        if ( X509* cert = SSL_get_peer_certificate(socket.native_handle()) )
+        {
+            if ( auto name = X509_get_subject_name(cert) )
+            {
+                int index = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
+                if ( index >= 0 )
+                {
+                    if ( auto entry = X509_NAME_get_entry(name, index) )
+                    {
+                        if ( auto data = X509_NAME_ENTRY_get_data(entry) )
+                        {
+                            unsigned char* out_buffer = nullptr;
+                            auto size = ASN1_STRING_to_UTF8(&out_buffer, data);
+
+                            if ( size >= 0 )
+                                output = std::string((char*)out_buffer, size);
+
+                            if ( out_buffer )
+                                free(out_buffer);
+
+                            if ( size >= 0 )
+                                return {};
+                        }
+                    }
+                }
+            }
+            return "Error retrieving certificate name";
+        }
+        return "No SSL certificate";
+    }
+
+    std::string get_cert_common_name()
+    {
+        std::string output;
+        get_cert_common_name(output);
+        return output;
+    }
+
 private:
     ssl_socket_type socket;
 };
