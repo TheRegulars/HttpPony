@@ -103,6 +103,17 @@ public:
         return io::error_to_status(error);
     }
 
+    httpony::OperationStatus set_session_id_context(const std::string& id)
+    {
+
+        if ( !SSL_CTX_set_session_id_context(context.native_handle(),
+            (const unsigned char*)id.data(), id.size()) )
+        {
+            return "Session ID too long";
+        }
+        return {};
+    }
+
 protected:
     /**
      * \brief Creates a connection linked to a SSL socket
