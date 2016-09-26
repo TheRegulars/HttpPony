@@ -172,14 +172,14 @@ int main(int argc, char** argv)
     PingPongServer server(httpony::IPAddress{listen});
     server.set_certificate(cert_file, key_file, dh_file);
     server.load_cert_authority(cert_file);
-    server.set_verify_mode(true);
+    server.set_verify_mode(httpony::ssl::VerifyMode::Strict);
     server.start();
     std::cout << "Server started on port " << server.listen_address().port << "\n";
 
     // This starts the client on a separate thread
     PingPongClient client(server.listen_address());
     client.load_cert_authority(cert_file);
-    client.set_verify_mode(true);
+    client.set_verify_mode(httpony::ssl::VerifyMode::Strict);
     client.set_certificate(cert_file, key_file, dh_file);
     client.start();
     std::cout << "Client started\n";

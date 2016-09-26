@@ -38,7 +38,7 @@ public:
      * \brief Toggles certificate verification (disabled by default)
      * \see load_cert_authority() and load_default_authorities()
      */
-    void set_verify_mode(bool verify)
+    void set_verify_mode(VerifyMode verify)
     {
         this->verify = verify;
     }
@@ -46,7 +46,7 @@ public:
     /**
      * \brief Whether the agent shall perform certificate verification
      */
-    bool verify_mode() const
+    VerifyMode verify_mode() const
     {
         return verify;
     }
@@ -167,7 +167,7 @@ protected:
 
 private:
     boost_ssl::context context;
-    bool verify = false;
+    VerifyMode verify = VerifyMode::Disabled;
 };
 
 } // namespace ssl

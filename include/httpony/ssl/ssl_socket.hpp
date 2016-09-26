@@ -30,10 +30,17 @@ namespace ssl {
 
 namespace boost_ssl = boost::asio::ssl;
 
+enum class VerifyMode
+{
+    Disabled = boost_ssl::verify_none,
+    Loose = boost_ssl::verify_peer,
+    Strict = boost_ssl::verify_peer|boost_ssl::verify_fail_if_no_peer_cert,
+};
 
 class SslSocket : public io::SocketWrapper
 {
 public:
+
     using ssl_socket_type = boost_ssl::stream<raw_socket_type>;
 
     explicit SslSocket(
@@ -85,15 +92,10 @@ public:
         return io::error_to_status(error);
     }
 
-    httpony::OperationStatus set_verify_mode(bool verify)
+    httpony::OperationStatus set_verify_mode(VerifyMode verify)
     {
         boost::system::error_code error;
-        socket.set_verify_mode(
-            verify ?
-            boost_ssl::verify_peer | boost_ssl::verify_fail_if_no_peer_cert :
-            boost_ssl::verify_none,
-            error
-        );
+        socket.set_verify_mode(boost_ssl::verify_mode(verify), error);
         return io::error_to_status(error);
     }
 
