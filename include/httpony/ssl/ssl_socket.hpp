@@ -100,9 +100,11 @@ public:
     /**
      * \brief Retrieves the common name of the verified certificate (if any)
      */
-    httpony::OperationStatus get_cert_common_name(std::string& output)
+    httpony::OperationStatus get_cert_common_name(std::string& output) const
     {
-        if ( X509* cert = SSL_get_peer_certificate(socket.native_handle()) )
+        // not going to modify anything so it should be const
+        SSL* native = const_cast<ssl_socket_type&>(socket).native_handle();
+        if ( X509* cert = SSL_get_peer_certificate(native) )
         {
             if ( auto name = X509_get_subject_name(cert) )
             {
@@ -133,7 +135,7 @@ public:
         return "No SSL certificate";
     }
 
-    std::string get_cert_common_name()
+    std::string get_cert_common_name() const
     {
         std::string output;
         get_cert_common_name(output);

@@ -93,6 +93,11 @@ public:
         return data->socket;
     }
 
+    const TimeoutSocket& socket() const
+    {
+        return data->socket;
+    }
+
     explicit operator bool() const
     {
         return !!data;

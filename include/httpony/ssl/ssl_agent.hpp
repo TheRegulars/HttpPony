@@ -114,6 +114,22 @@ public:
         return {};
     }
 
+    static httpony::OperationStatus get_cert_common_name(
+        const io::TimeoutSocket& socket, std::string& output)
+    {
+        if ( auto ssl_socket = socket_cast(socket) )
+            return ssl_socket->get_cert_common_name(output);
+        output.clear();
+        return "Not a SSL socket";
+    }
+
+    static std::string get_cert_common_name(const io::TimeoutSocket& socket)
+    {
+        std::string output;
+        get_cert_common_name(socket, output);
+        return output;
+    }
+
 protected:
     /**
      * \brief Creates a connection linked to a SSL socket
@@ -142,6 +158,12 @@ protected:
     {
         return dynamic_cast<SslSocket*>(&in.socket_wrapper());
     }
+
+    static const SslSocket* socket_cast(const io::TimeoutSocket& in)
+    {
+        return dynamic_cast<const SslSocket*>(&in.socket_wrapper());
+    }
+
 
 private:
     boost_ssl::context context;

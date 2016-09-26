@@ -244,6 +244,11 @@ public:
         return *_socket;
     }
 
+    const SocketWrapper& socket_wrapper() const
+    {
+        return *_socket;
+    }
+
     /**
      * \brief Sets the timeout
      *
