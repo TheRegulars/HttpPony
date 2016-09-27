@@ -24,6 +24,7 @@
 
 /// \cond
 #include <melanolib/utils/c++-compat.hpp>
+#include <melanolib/math/math.hpp>
 /// \endcond
 
 #include "httpony/http/headers.hpp"
@@ -229,6 +230,97 @@ public:
 
 private:
     container_type data;
+};
+
+/**
+ * \brief Represents a sub-sequence within a Path object
+ */
+class PathSlice
+{
+public:
+    using value_type = httpony::Path::value_type;
+    using reference = httpony::Path::const_reference;
+    using iterator = httpony::Path::const_iterator;
+    using reverse_iterator = httpony::Path::const_reverse_iterator;
+    using size_type = httpony::Path::size_type;
+
+    PathSlice(iterator begin, iterator end)
+        : range_begin(begin), range_end(end)
+    {}
+    PathSlice(const httpony::Path& path)
+        : range_begin(path.begin()), range_end(path.end())
+    {}
+
+    /**
+     * \brief Whether the given path is a prefix of this slice
+     */
+    bool match_prefix(const Path& prefix) const
+    {
+        return prefix.empty() || (
+            size() >= prefix.size() &&
+            std::equal(prefix.begin(), prefix.end(), range_begin)
+        );
+    }
+
+    /**
+     * \brief Whether the given path is a suffix of this slice
+     */
+    bool match_suffix(const Path& suffix) const
+    {
+        return suffix.empty() || (
+            size() >= suffix.size() &&
+            std::equal(suffix.rbegin(), suffix.rend(), rbegin())
+        );
+    }
+
+    /**
+     * \brief Whether the given path is a equal to this slice
+     */
+    bool match_exactly(const httpony::Path& suffix) const
+    {
+        return std::equal(suffix.begin(), suffix.end(), range_begin, range_end);
+    }
+
+    /**
+     * \brief Returns a slice removing \p count items from the front
+     */
+    PathSlice left_stripped(size_type count) const
+    {
+        return {melanolib::math::min(range_begin + count, range_end), range_end};
+    }
+
+    /**
+     * \brief Strips the longest matching suffix from \p path
+     */
+    PathSlice strip_path_suffix(const httpony::Path& path) const
+    {
+        auto iter_pair = std::mismatch(path.rbegin(), path.rend(), rbegin(), rend());
+        return PathSlice(path.begin(), iter_pair.first.base());
+    }
+
+    /**
+     * \brief Converts the slice to a path object
+     */
+    httpony::Path to_path() const
+    {
+        return httpony::Path(range_begin, range_end);
+    }
+
+    reference operator[](const size_type pos) const
+    {
+        return range_begin[pos];
+    }
+
+    iterator begin() const { return range_begin; }
+    iterator end() const { return range_end; }
+    reverse_iterator rbegin() const { return reverse_iterator(range_end); }
+    reverse_iterator rend() const { return reverse_iterator(range_begin); }
+    size_type size() const { return range_end - range_begin; }
+    bool empty() const { return range_end <= range_begin; }
+
+private:
+    iterator range_begin;
+    iterator range_end;
 };
 
 /**
