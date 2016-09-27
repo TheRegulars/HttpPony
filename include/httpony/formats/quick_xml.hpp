@@ -487,11 +487,18 @@ public:
     {}
 
     template<class ElemT>
-    ElemT& add_item(ElemT&& element)
+    ElemT& add_item(const std::shared_ptr<ElemT>& shared)
     {
-        auto shared = std::make_shared<ElemT>(std::forward<ElemT>(element));
         append(BlockElement{"li", shared});
         return *shared;
+    }
+
+    template<class ElemT>
+    std::enable_if_t<std::is_base_of<Node, std::decay_t<ElemT>>::value, std::decay_t<ElemT>&>
+    add_item(ElemT&& element)
+    {
+        auto shared = std::make_shared<std::decay_t<ElemT>>(std::forward<ElemT>(element));
+        return add_item<std::decay_t<ElemT>>(shared);
     }
 };
 
