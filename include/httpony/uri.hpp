@@ -131,6 +131,18 @@ public:
         }
     }
 
+    Path(value_type::const_pointer path, bool url_decode = false)
+    {
+        auto segments = melanolib::string::char_split(path, '/');
+        for ( auto& segment : segments )
+        {
+            if ( segment == ".." && !data.empty() )
+                data.pop_back();
+            else if ( segment != "." )
+                data.push_back(url_decode ? urldecode(segment) : segment);
+        }
+    }
+
 // Concat
     Path parent() const
     {
@@ -150,30 +162,12 @@ public:
         return *this;
     }
 
-
-    Path& operator+=(const_reference path)
-    {
-        return *this += Path(path);
-    }
-
-    Path& operator/=(const_reference path)
-    {
-        return *this += path;
-    }
-
     Path& operator/=(const Path& path)
     {
         return *this += path;
     }
 
     Path operator+(const Path& path) const
-    {
-        auto copy = *this;
-        copy += path;
-        return copy;
-    }
-
-    Path operator+(const_reference path) const
     {
         auto copy = *this;
         copy += path;
@@ -187,11 +181,6 @@ public:
 
 
     Path operator/(const Path& path) const
-    {
-        return *this + path;
-    }
-
-    Path operator/(const_reference path) const
     {
         return *this + path;
     }
