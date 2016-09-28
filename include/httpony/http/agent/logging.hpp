@@ -58,9 +58,9 @@ template<>
  * \brief Streams values as Common Log Format
  */
 template<class T>
-    CommonLogFormatItem<T> clf(T&& item)
+    CommonLogFormatItem<std::decay_t<T>> clf(T&& item)
     {
-        return CommonLogFormatItem<T>(std::forward<T>(item));
+        return CommonLogFormatItem<std::decay_t<T>>(std::forward<T>(item));
     }
 
 } // namespace httpony

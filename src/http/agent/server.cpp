@@ -247,7 +247,11 @@ void Server::process_log_format(
             output << response.status.code;
             break;
         case 't': // The time, in the format given by argument
-            output << melanolib::time::strftime(melanolib::time::DateTime(), argument);
+            // NOTE: The default here uses ISO, unlike Apache
+            output << melanolib::time::strftime(
+                request.received_date,
+                argument.empty() ? "%c" : argument
+            );
             break;
         case 'T': // The time taken to serve the request, in a time unit given by argument (default seconds).
         {
@@ -262,7 +266,7 @@ void Server::process_log_format(
             break;
         }
         case 'u': // Remote user (from auth; may be bogus if return status (%s) is 401)
-            output << request.auth.user;
+            output << clf(request.auth.user);
             break;
         case 'U': // The URL path requested, not including any query string.
             output << request.uri.path.url_encoded();
