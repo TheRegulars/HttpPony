@@ -290,6 +290,14 @@ public:
     }
 
     /**
+     * \brief Returns a slice removing \p count items from the back
+     */
+    PathSlice right_stripped(size_type count) const
+    {
+        return {range_begin, melanolib::math::max(range_begin, range_end - count)};
+    }
+
+    /**
      * \brief Strips the longest matching suffix from \p path
      */
     PathSlice strip_path_suffix(const httpony::Path& path) const
