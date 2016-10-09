@@ -358,6 +358,36 @@ private:
     std::string _contents;
 };
 
+/**
+ * \brief Raw XML expressed as a string, performs no additional validation
+ */
+class Raw : public Node
+{
+public:
+    Raw(std::string contents)
+        : _contents(std::move(contents))
+    {}
+
+    std::string contents() const
+    {
+        return _contents;
+    }
+
+    void set_contents(const std::string& text)
+    {
+        _contents = text;
+    }
+
+    void print(std::ostream& out, const Indentation& indent) const override
+    {
+        out << _contents;
+    }
+
+private:
+    std::string _contents;
+};
+
+
 class XmlDeclaration : public Node
 {
 public:
