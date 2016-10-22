@@ -379,7 +379,7 @@ private:
     {
         std::unique_lock<std::mutex> lock(mutex_queue);
         pause = true;
-        do_wait(false);
+        do_wait(true);
         threads.resize(n);
         running = std::vector<std::atomic<bool>>(n);
         mutexes = std::vector<std::mutex>(n);
