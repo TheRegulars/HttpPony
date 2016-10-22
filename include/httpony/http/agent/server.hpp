@@ -377,7 +377,7 @@ private:
      */
     void do_resize_pool(std::size_t n)
     {
-        auto lock = lock_all();
+        std::unique_lock<std::mutex> lock(mutex_queue);
         pause = true;
         do_wait(false);
         threads.resize(n);
@@ -394,9 +394,9 @@ private:
         std::size_t index = 0;
         for ( auto& thread : threads )
         {
-            std::unique_lock<std::mutex> lock;
+            std::unique_lock<std::mutex> mlock;
             if ( lock )
-                lock = lock_thread(index);
+                mlock = lock_thread(index);
             if ( thread.joinable() )
                 thread.join();
             index++;
