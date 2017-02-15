@@ -349,7 +349,7 @@ private:
 
     item_iterator remove_old(item_iterator iter)
     {
-        for ( auto it_old = old_requests.begin(); it_old != old_requests.end(); )
+        for ( auto it_old = old_requests.begin(); it_old != old_requests.end(); ++it_old )
         {
             if ( *it_old == &*iter )
             {
