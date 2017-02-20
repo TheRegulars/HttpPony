@@ -53,6 +53,7 @@ public:
     OperationStatus close() override
     {
         boost::system::error_code error;
+        socket.shutdown(error);
         raw_socket().close(error);
         return io::error_to_status(error);
     }
