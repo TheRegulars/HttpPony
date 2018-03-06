@@ -80,7 +80,7 @@ public:
      *
      * It shouldn't throw an exception on failure
      */
-    virtual OperationStatus close() = 0;
+    virtual OperationStatus close(bool graceful = true) = 0;
 
     /**
      * \brief Returns the low-level socket object
@@ -145,9 +145,11 @@ public:
         : socket(io_service)
     {}
 
-    OperationStatus close() override
+    OperationStatus close(bool graceful = true) override
     {
         boost::system::error_code error;
+        if ( !graceful )
+            socket.cancel(error);
         socket.close(error);
         return error_to_status(error);
     }
@@ -204,15 +206,15 @@ public:
      */
     ~TimeoutSocket()
     {
-        close();
+        close(false);
     }
 
     /**
      * \brief Closes the socket, further IO calls will fail
      */
-    void close()
+    void close(bool graceful = true)
     {
-        _socket->close();
+        _socket->close(graceful);
     }
 
     /**

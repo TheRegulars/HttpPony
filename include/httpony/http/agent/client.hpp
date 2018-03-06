@@ -369,6 +369,8 @@ private:
 
     std::mutex old_requests_mutex;
     std::list<Request*> old_requests;
+
+    std::size_t max_requests = 8;
 };
 
 using AsyncClient = BasicAsyncClient<Client>;

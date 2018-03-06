@@ -50,10 +50,19 @@ public:
         : socket(io_service, context)
     {}
 
-    OperationStatus close() override
+    OperationStatus close(bool graceful = true) override
     {
         boost::system::error_code error;
-        socket.shutdown(error);
+        if ( !graceful )
+        {
+            raw_socket().cancel(error);
+            socket.async_shutdown([](const boost::system::error_code&){});
+            socket.get_io_service().run_one(error);
+        }
+        else
+        {
+            socket.shutdown(error);
+        }
         raw_socket().close(error);
         return io::error_to_status(error);
     }
