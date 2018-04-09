@@ -27,6 +27,8 @@
 #include <stack>
 #include <sstream>
 #include <string>
+#include <iomanip>
+#include <list>
 
 #include <boost/property_tree/ptree.hpp>
 
@@ -36,6 +38,62 @@
 
 namespace httpony {
 namespace json {
+
+namespace detail {
+    /**
+     * \brief Whether \c c can be espaced on a string literal
+     */
+    constexpr inline bool escapeable(char c)
+    {
+        switch ( c )
+        {
+            case '\b': case '\f': case '\r': case '\t': case '\n':
+            case '\\': case '\"': case '/':
+                return true;
+        }
+        return false;
+    }
+
+    constexpr inline char escape(char c)
+    {
+        switch ( c )
+        {
+            case '\b': return 'b';
+            case '\f': return 'f';
+            case '\r': return 'r';
+            case '\t': return 't';
+            case '\n': return 'n';
+            default:   return c;
+        }
+    }
+
+    inline void quote(const std::string& str, std::ostream& out)
+    {
+        melanolib::string::Utf8Parser parser(str);
+        out << '"';
+        while ( !parser.finished() )
+        {
+            auto unicode = parser.next();
+            if ( unicode.is_ascii() )
+            {
+                char c = unicode.point();
+                if ( escapeable(c) )
+                    out << '\\' << escape(c);
+            }
+            out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << unicode.point() << std::dec;
+        }
+        out << '"';
+    }
+
+    inline void add_indent(std::ostream& out, int indent)
+    {
+        if ( !indent )
+            return;
+        out.put('\n');
+        for ( int i = 0; i < indent; i++ )
+            out.put(' ');
+    }
+} // namespace detail
 
 /**
  * \brief Error encountered when parsing JSON
@@ -50,6 +108,317 @@ struct JsonError : public std::runtime_error
         file(std::move(file)),
         line(line)
     {}
+};
+
+
+class JsonNode
+{
+public:
+    enum Type {
+        Null,
+        String,
+        Number,
+        Boolean,
+        Object,
+        Array,
+    };
+    using path_type = std::string;
+    using key_type = std::string;
+    using mapped_type = JsonNode;
+    using value_type = std::pair<key_type, mapped_type>;
+    using container = std::list<value_type>;
+    using iterator = container::iterator;
+    using const_iterator = container::const_iterator;
+
+    JsonNode() : type_(Object) {}
+    explicit JsonNode(std::nullptr_t) : type_(Null) {}
+    explicit JsonNode(long value)
+      : type_(Number),
+        value_(melanolib::string::to_string(value))
+    {}
+    explicit JsonNode(bool value)
+      : type_(Boolean),
+      value_(value ? "true" : "false")
+    {}
+    explicit JsonNode(std::string value)
+      : type_(String),
+      value_(std::move(value))
+    {}
+
+    explicit JsonNode(const boost::property_tree::ptree& ptree)
+        : type_(Object)
+    {
+        if ( ptree.empty() )
+        {
+            type_ = String;
+            value_ = ptree.data();
+        }
+        else
+        {
+            for ( const auto& pair : ptree )
+            {
+                children_.push_back({pair.first, JsonNode(pair.second)});
+            }
+        }
+    }
+
+    boost::property_tree::ptree to_ptree() const
+    {
+        switch ( type_ )
+        {
+            case Null:
+                return boost::property_tree::ptree("null");
+            case Number:
+            case String:
+            case Boolean:
+                return boost::property_tree::ptree(value_);
+            case Object:
+            case Array:
+            {
+                boost::property_tree::ptree out;
+                for ( const auto& pair : children_ )
+                {
+                    out.push_back({pair.first, pair.second.to_ptree()});
+                }
+                return out;
+            }
+        }
+    }
+
+    const std::string& raw_value() const
+    {
+        return value_;
+    }
+
+    const auto& children() const
+    {
+        return children_;
+    }
+
+    Type type() const
+    {
+        return type_;
+    }
+
+    void set_is_object()
+    {
+        type_ = Object;
+        value_.clear();
+    }
+
+    long value_int() const
+    {
+        if ( type_ != Number )
+            throw JsonError("", 0, "Not a number value");
+        return melanolib::string::to_int(value_);
+    }
+
+    void set_value_bool(long value)
+    {
+        type_ = Number;
+        value_ = melanolib::string::to_string(value);
+    }
+
+    bool value_bool() const
+    {
+        if ( type_ != Boolean )
+            throw JsonError("", 0, "Not a boolean value");
+        return value_ == "true";
+    }
+
+    void set_value_bool(bool value)
+    {
+        type_ = Boolean;
+        value_ = value ? "true" : "false";
+    }
+
+    const std::string& value_string() const
+    {
+        if ( type_ != String )
+            throw JsonError("", 0, "Not a string value");
+        return value_;
+    }
+
+    void set_value_string(const std::string& value)
+    {
+        type_ = String;
+        value_ = value;
+    }
+
+    void format(std::ostream& out, int indent = 0, int indent_depth = 0 ) const
+    {
+        switch ( type_ )
+        {
+            case Null:
+                out << "null";
+                break;
+            case String:
+                detail::quote(value_, out);
+                break;
+            case Number:
+            case Boolean:
+                out << value_;
+                break;
+            case Object:
+            {
+                out << '{';
+                int n = 0;
+                for ( const auto& pair : children_ )
+                {
+                    if ( n++ ) out << ',';
+                    detail::add_indent(out, indent * (indent_depth + 1));
+                    detail::quote(pair.first, out);
+                    out << ':';
+                    pair.second.format(out, indent, indent_depth + 1);
+                }
+                detail::add_indent(out, indent * indent_depth);
+                out << '}';
+                break;
+            }
+            case Array:
+            {
+                out << '[';
+                int n = 0;
+                for ( const auto& pair : children_ )
+                {
+                    detail::add_indent(out, indent * (indent_depth + 1));
+                    if ( n++ ) out << ',';
+                    pair.second.format(out);
+                }
+                detail::add_indent(out, indent * indent_depth);
+                out << ']';
+                break;
+            }
+
+        }
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const JsonNode& node)
+    {
+        node.format(os);
+        return os;
+    }
+
+    const_iterator find(const key_type& key) const
+    {
+        auto iter = children_.begin();
+        for ( auto end = children_.end(); iter != end; ++iter )
+            if ( iter->first == key )
+                break;
+        return iter;
+    }
+
+    iterator find(const key_type& key)
+    {
+        auto iter = children_.begin();
+        for ( auto end = children_.end(); iter != end; ++iter )
+            if ( iter->first == key )
+                break;
+        return iter;
+    }
+
+    mapped_type& operator[](const key_type& key)
+    {
+        auto iter = find(key);
+        if ( iter == children_.end() )
+        {
+            iter = children_.emplace(iter, key, mapped_type());
+        }
+        return iter->second;
+    }
+
+// pt
+    void clear()
+    {
+        children_.clear();
+        value_.clear();
+        type_ = Object;
+    }
+
+    JsonNode& get_child(const path_type& path)
+    {
+        const JsonNode* child = find_child_ptr(path);
+        return const_cast<JsonNode&>(*child);
+    }
+
+    const JsonNode& get_child(const path_type& path) const
+    {
+        return *find_child_ptr(path);
+    }
+
+    JsonNode& get_child(const path_type& path, JsonNode& default_child)
+    {
+        const JsonNode* child = find_child_ptr(path);
+        if ( !child )
+            return default_child;
+        return const_cast<JsonNode&>(*child);
+    }
+
+    const JsonNode& get_child(const path_type& path, const JsonNode& default_child) const
+    {
+        const JsonNode* child = find_child_ptr(path);
+        if ( !child )
+            return default_child;
+        return *child;
+    }
+
+    JsonNode& put_child(const path_type& path, JsonNode node = {})
+    {
+        auto pieces = melanolib::string::char_split(path, '.');
+        if ( pieces.size() < 1 )
+            throw JsonError("", 0, "Missing path");
+
+        auto last = pieces.back();
+        pieces.pop_back();
+        JsonNode* parent = this;
+        for ( const auto& piece : pieces )
+        {
+            parent = &(*parent)[piece];
+            if ( parent->type_ != Object )
+                throw JsonError("", 0, "Not an object");
+        }
+        parent->children_.push_back({last, node});
+    }
+
+    JsonNode& put(const path_type& path, long value)
+    {
+        return put_child(path, JsonNode(value));
+    }
+
+    JsonNode& put(const path_type& path, std::string value)
+    {
+        return put_child(path, JsonNode(std::move(value)));
+    }
+
+    JsonNode& put(const path_type& path, std::nullptr_t value)
+    {
+        return put_child(path, JsonNode(value));
+    }
+
+    JsonNode& put(const path_type& path, bool value)
+    {
+        return put_child(path, JsonNode(value));
+    }
+
+private:
+    const JsonNode* find_child_ptr(const path_type& path) const
+    {
+        auto pieces = melanolib::string::char_split(path, '.');
+        const JsonNode* parent = this;
+        for ( const auto& piece : pieces )
+        {
+            auto iter = parent->find(piece);
+            if ( iter == parent->children_.end() )
+                return nullptr;
+            parent = &iter->second;
+        }
+        return parent;
+    }
+
+private:
+    Type type_;
+    std::string value_;
+    container children_;
 };
 
 /**
@@ -355,7 +724,7 @@ private:
                     break;
                 if ( c == '\\' )
                 {
-                    c = escape(stream.get());
+                    c = unescape(stream.get());
                     if ( !stream )
                         break;
 
@@ -373,7 +742,7 @@ private:
                         continue;
                     }
 
-                    if ( !escapeable(c) )
+                    if ( !detail::escapeable(c) )
                         r += '\\';
                 }
 
@@ -476,23 +845,9 @@ private:
     }
 
     /**
-     * \brief Whether \c c can be espaced on a string literal
-     */
-    bool escapeable(char c)
-    {
-        switch ( c )
-        {
-            case '\b': case '\f': case '\r': case '\t': case '\n':
-            case '\\': case '\"': case '/':
-                return true;
-        }
-        return false;
-    }
-
-    /**
      * \brief Escape code for \\ c
      */
-    char escape(char c)
+    char unescape(char c)
     {
         switch ( c )
         {
