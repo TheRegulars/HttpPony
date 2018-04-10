@@ -188,3 +188,207 @@ BOOST_AUTO_TEST_CASE( test_comments )
     BOOST_CHECK( tree.get<std::string>("0") == "123" );
 }
 
+
+BOOST_AUTO_TEST_CASE( test_node_value_ctor )
+{
+    JsonNode empty;
+    BOOST_CHECK(empty.type() == JsonNode::Object);
+    BOOST_CHECK(empty.raw_value() == "");
+    BOOST_CHECK(empty.children().empty());
+    BOOST_CHECK_THROW(empty.value_string(), JsonError);
+    BOOST_CHECK_THROW(empty.value_bool(), JsonError);
+    BOOST_CHECK_THROW(empty.value_int(), JsonError);
+
+    JsonNode number(1);
+    BOOST_CHECK(number.type() == JsonNode::Number);
+    BOOST_CHECK(number.raw_value() == "1");
+    BOOST_CHECK(number.children().empty());
+    BOOST_CHECK_THROW(number.value_string(), JsonError);
+    BOOST_CHECK_THROW(number.value_bool(), JsonError);
+    BOOST_CHECK(number.value_int() == 1);
+
+    JsonNode booleant(true);
+    BOOST_CHECK(booleant.type() == JsonNode::Boolean);
+    BOOST_CHECK(booleant.raw_value() == "true");
+    BOOST_CHECK(booleant.children().empty());
+    BOOST_CHECK_THROW(booleant.value_string(), JsonError);
+    BOOST_CHECK(booleant.value_bool() == true);
+    BOOST_CHECK_THROW(booleant.value_int(), JsonError);
+
+    JsonNode booleanf(false);
+    BOOST_CHECK(booleanf.type() == JsonNode::Boolean);
+    BOOST_CHECK(booleanf.raw_value() == "false");
+    BOOST_CHECK(booleanf.children().empty());
+    BOOST_CHECK_THROW(booleanf.value_string(), JsonError);
+    BOOST_CHECK(booleanf.value_bool() == false);
+    BOOST_CHECK_THROW(booleanf.value_int(), JsonError);
+
+    JsonNode null(nullptr);
+    BOOST_CHECK(null.type() == JsonNode::Null);
+    BOOST_CHECK(null.raw_value() == "");
+    BOOST_CHECK(null.children().empty());
+    BOOST_CHECK_THROW(null.value_string(), JsonError);
+    BOOST_CHECK_THROW(null.value_bool(), JsonError);
+    BOOST_CHECK_THROW(null.value_int(), JsonError);
+
+    JsonNode string("foo");
+    BOOST_CHECK(string.type() == JsonNode::String);
+    BOOST_CHECK(string.raw_value() == "foo");
+    BOOST_CHECK(string.children().empty());
+    BOOST_CHECK(string.value_string() == "foo");
+    BOOST_CHECK_THROW(string.value_bool(), JsonError);
+    BOOST_CHECK_THROW(string.value_int(), JsonError);
+}
+
+BOOST_AUTO_TEST_CASE( test_node_ctor_ptree )
+{
+    boost::property_tree::ptree ptree;
+    ptree.put("foo.bar", "foo");
+    ptree.put("foo.baz", "bar");
+    ptree.put("hello", "world");
+
+    JsonNode node(ptree);
+    BOOST_CHECK(node.type() == JsonNode::Object);
+    BOOST_CHECK(node.children().size() == 2);
+
+    auto foo = node["foo"];
+    BOOST_CHECK(foo.type() == JsonNode::Object);
+    BOOST_CHECK(foo.children().size() == 2);
+    BOOST_CHECK(foo["bar"].type() == JsonNode::String);
+    BOOST_CHECK(foo["bar"].value_string() == "foo");
+    BOOST_CHECK(foo["baz"].type() == JsonNode::String);
+    BOOST_CHECK(foo["baz"].value_string() == "bar");
+
+    auto hello = node["hello"];
+    BOOST_CHECK(hello.type() == JsonNode::String);
+    BOOST_CHECK(hello.value_string() == "world");
+}
+
+BOOST_AUTO_TEST_CASE( test_node_to_ptree )
+{
+    boost::property_tree::ptree ptree;
+    ptree = JsonNode(nullptr).to_ptree();
+    BOOST_CHECK(ptree.data() == "null");
+    BOOST_CHECK(ptree.size() == 0);
+
+    ptree = JsonNode(123).to_ptree();
+    BOOST_CHECK(ptree.data() == "123");
+    BOOST_CHECK(ptree.size() == 0);
+
+    ptree = JsonNode(true).to_ptree();
+    BOOST_CHECK(ptree.data() == "true");
+    BOOST_CHECK(ptree.size() == 0);
+
+    ptree = JsonNode("foo").to_ptree();
+    BOOST_CHECK(ptree.data() == "foo");
+    BOOST_CHECK(ptree.size() == 0);
+
+    ptree = JsonNode().to_ptree();
+    BOOST_CHECK(ptree.data() == "");
+    BOOST_CHECK(ptree.size() == 0);
+
+    JsonNode node;
+    node.put("foo.bar", "Bar");
+    node.put("foo.baz", "Baz");
+    ptree = node.to_ptree();
+    BOOST_CHECK(ptree.data() == "");
+    BOOST_CHECK(ptree.size() == 1);
+    BOOST_CHECK(ptree.get_child("foo").size() == 2);
+    BOOST_CHECK_EQUAL(ptree.get<std::string>("foo.bar"), "Bar");
+    BOOST_CHECK_EQUAL(ptree.get<std::string>("foo.baz"), "Baz");
+}
+
+BOOST_AUTO_TEST_CASE( test_node_put_child )
+{
+    JsonNode node;
+    BOOST_CHECK_THROW(node.put_child(""), JsonError);
+
+    JsonNode* child = &node.put_child("foo.bar");
+    BOOST_CHECK_EQUAL(node.size(), 1);
+    BOOST_CHECK_EQUAL(&node["foo"]["bar"], child);
+    node.put_child("foo.bar.hello");
+    node.put_child("foo.bar.world");
+    BOOST_CHECK_EQUAL(child->size(), 2);
+
+    child = &node.put_child("bar.foo", JsonNode(123));
+    BOOST_CHECK_EQUAL(node.size(), 2);
+    BOOST_CHECK_EQUAL(&node["bar"]["foo"], child);
+    BOOST_CHECK_EQUAL(child->type(), JsonNode::Number);
+    BOOST_CHECK_EQUAL(child->value_int(), 123);
+    BOOST_CHECK_EQUAL(child->size(), 0);
+    BOOST_CHECK_THROW(node.put_child("bar.foo.hello"), JsonError);
+
+    JsonNode* owchild = &node.put_child("bar.foo", JsonNode(true));
+    BOOST_CHECK_EQUAL(owchild, child);
+    BOOST_CHECK_EQUAL(child->type(), JsonNode::Boolean);
+    BOOST_CHECK_EQUAL(child->value_bool(), true);
+    JsonNode* addchild = &node.add_child("bar.foo", JsonNode(567));
+    BOOST_CHECK_NE(addchild, child);
+    BOOST_CHECK_EQUAL(addchild->type(), JsonNode::Number);
+    BOOST_CHECK_EQUAL(addchild->value_int(), 567);
+}
+
+BOOST_AUTO_TEST_CASE( test_node_put )
+{
+    JsonNode node;
+    BOOST_CHECK_THROW(node.put("", 123), JsonError);
+
+    JsonNode* child = &node.put("foo.bar", 123);
+    BOOST_CHECK_EQUAL(node.size(), 1);
+    BOOST_CHECK_EQUAL(&node["foo"]["bar"], child);
+    BOOST_CHECK_EQUAL(child->type(), JsonNode::Number);
+    BOOST_CHECK_EQUAL(child->value_int(), 123);
+}
+
+BOOST_AUTO_TEST_CASE( test_node_get_child )
+{
+    JsonNode node;
+    node.put("foo.bar", 123);
+    node.put("foo.baz", true);
+    JsonNode *child = &node.get_child("foo.bar");
+    BOOST_CHECK_EQUAL(child->type(), JsonNode::Number);
+    BOOST_CHECK_EQUAL(child->value_int(), 123);
+    BOOST_CHECK_EQUAL(child, &node["foo"]["bar"]);
+
+    child = &node.get_child("foo");
+    BOOST_CHECK_EQUAL(child->type(), JsonNode::Object);
+    BOOST_CHECK_EQUAL(child->size(), 2);
+}
+
+BOOST_AUTO_TEST_CASE( test_node_to_json )
+{
+    std::ostringstream ss;
+    ss.str(""); ss << JsonNode();
+    BOOST_CHECK_EQUAL(ss.str(), "{}");
+    ss.str(""); ss << JsonNode(123);
+    BOOST_CHECK_EQUAL(ss.str(), "123");
+    ss.str(""); ss << JsonNode(true);
+    BOOST_CHECK_EQUAL(ss.str(), "true");
+    ss.str(""); ss << JsonNode(nullptr);
+    BOOST_CHECK_EQUAL(ss.str(), "null");
+    ss.str(""); ss << JsonNode("\xe2\x82\xac foo\n");
+    BOOST_CHECK_EQUAL(ss.str(), R"("\u20ac foo\n")");
+
+    JsonNode node;
+    node.put("foo.bar", 123);
+    node.put("foo.baz", true);
+    ss.str(""); ss << node;
+    BOOST_CHECK_EQUAL(ss.str(), R"({"foo":{"bar":123,"baz":true}})");
+}
+
+BOOST_AUTO_TEST_CASE( test_node_to_json_pretty )
+{
+    JsonNode node;
+    node.put("foo.bar", 123);
+    node.put("foo.baz", true);
+    std::ostringstream ss;
+    node.format(ss, 2);
+    BOOST_CHECK_EQUAL(ss.str(),
+R"({
+  "foo": {
+    "bar": 123,
+    "baz": true
+  }
+})");
+
+}

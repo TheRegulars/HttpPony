@@ -79,18 +79,23 @@ namespace detail {
                 char c = unicode.point();
                 if ( escapeable(c) )
                     out << '\\' << escape(c);
+                else
+                    out << c;
             }
-            out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << unicode.point() << std::dec;
+            else
+            {
+                out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << unicode.point() << std::dec;
+            }
         }
         out << '"';
     }
 
-    inline void add_indent(std::ostream& out, int indent)
+    inline void add_indent(std::ostream& out, int indent, int depth)
     {
         if ( !indent )
             return;
         out.put('\n');
-        for ( int i = 0; i < indent; i++ )
+        for ( int i = 0; i < indent * depth; i++ )
             out.put(' ');
     }
 } // namespace detail
@@ -136,6 +141,7 @@ public:
       : type_(Number),
         value_(melanolib::string::to_string(value))
     {}
+    explicit JsonNode(int value) : JsonNode(long(value)){}
     explicit JsonNode(bool value)
       : type_(Boolean),
       value_(value ? "true" : "false")
@@ -144,6 +150,7 @@ public:
       : type_(String),
       value_(std::move(value))
     {}
+    explicit JsonNode(const char* value) : JsonNode(std::string(value)) {}
 
     explicit JsonNode(const boost::property_tree::ptree& ptree)
         : type_(Object)
@@ -168,10 +175,6 @@ public:
         {
             case Null:
                 return boost::property_tree::ptree("null");
-            case Number:
-            case String:
-            case Boolean:
-                return boost::property_tree::ptree(value_);
             case Object:
             case Array:
             {
@@ -182,6 +185,11 @@ public:
                 }
                 return out;
             }
+            case Number:
+            case String:
+            case Boolean:
+            default:
+                return boost::property_tree::ptree(value_);
         }
     }
 
@@ -266,12 +274,14 @@ public:
                 for ( const auto& pair : children_ )
                 {
                     if ( n++ ) out << ',';
-                    detail::add_indent(out, indent * (indent_depth + 1));
+                    detail::add_indent(out, indent, (indent_depth + 1));
                     detail::quote(pair.first, out);
                     out << ':';
+                    if ( indent )
+                        out << ' ';
                     pair.second.format(out, indent, indent_depth + 1);
                 }
-                detail::add_indent(out, indent * indent_depth);
+                detail::add_indent(out, indent, indent_depth);
                 out << '}';
                 break;
             }
@@ -281,11 +291,11 @@ public:
                 int n = 0;
                 for ( const auto& pair : children_ )
                 {
-                    detail::add_indent(out, indent * (indent_depth + 1));
+                    detail::add_indent(out, indent, (indent_depth + 1));
                     if ( n++ ) out << ',';
                     pair.second.format(out);
                 }
-                detail::add_indent(out, indent * indent_depth);
+                detail::add_indent(out, indent, indent_depth);
                 out << ']';
                 break;
             }
@@ -335,6 +345,11 @@ public:
         type_ = Object;
     }
 
+    std::size_t size() const
+    {
+        return children_.size();
+    }
+
     JsonNode& get_child(const path_type& path)
     {
         const JsonNode* child = find_child_ptr(path);
@@ -362,42 +377,37 @@ public:
         return *child;
     }
 
+    JsonNode& add_child(const path_type& path, JsonNode node = {})
+    {
+        JsonNode* parent;
+        std::string last;
+        std::tie(parent, last) = add_parent(path);
+        parent->children_.push_back({last, std::move(node)});
+        return parent->children_.back().second;
+    }
+
     JsonNode& put_child(const path_type& path, JsonNode node = {})
     {
-        auto pieces = melanolib::string::char_split(path, '.');
-        if ( pieces.size() < 1 )
-            throw JsonError("", 0, "Missing path");
-
-        auto last = pieces.back();
-        pieces.pop_back();
-        JsonNode* parent = this;
-        for ( const auto& piece : pieces )
+        JsonNode* parent;
+        std::string last;
+        std::tie(parent, last) = add_parent(path);
+        auto iter = parent->find(last);
+        if ( iter == parent->children_.end() )
         {
-            parent = &(*parent)[piece];
-            if ( parent->type_ != Object )
-                throw JsonError("", 0, "Not an object");
+            parent->children_.push_back({last, std::move(node)});
+            return parent->children_.back().second;
         }
-        parent->children_.push_back({last, node});
+        else
+        {
+            iter->second = std::move(node);
+            return iter->second;
+        }
     }
 
-    JsonNode& put(const path_type& path, long value)
+    template<class T>
+    JsonNode& put(const path_type& path, T&& value)
     {
-        return put_child(path, JsonNode(value));
-    }
-
-    JsonNode& put(const path_type& path, std::string value)
-    {
-        return put_child(path, JsonNode(std::move(value)));
-    }
-
-    JsonNode& put(const path_type& path, std::nullptr_t value)
-    {
-        return put_child(path, JsonNode(value));
-    }
-
-    JsonNode& put(const path_type& path, bool value)
-    {
-        return put_child(path, JsonNode(value));
+        return put_child(path, JsonNode(std::forward<T>(value)));
     }
 
 private:
@@ -413,6 +423,25 @@ private:
             parent = &iter->second;
         }
         return parent;
+    }
+
+    std::pair<JsonNode*, std::string> add_parent(const path_type& path)
+    {
+        auto pieces = melanolib::string::char_split(path, '.');
+        if ( pieces.size() < 1 )
+            throw JsonError("", 0, "Missing path");
+
+        auto last = pieces.back();
+        pieces.pop_back();
+        JsonNode* parent = this;
+        for ( const auto& piece : pieces )
+        {
+            parent = &(*parent)[piece];
+            if ( parent->type_ != Object )
+                throw JsonError("", 0, "Not an object");
+        }
+
+        return {parent, last};
     }
 
 private:
