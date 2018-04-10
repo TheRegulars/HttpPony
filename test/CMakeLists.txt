@@ -46,7 +46,13 @@ if (BUILD_TESTING)
         add_dependencies(tests_compile ${test_name})
     endfunction(melanotest)
 
-    set(COMMON_LIBRARIES httpony melano_stringutils melano_time)
+    # For some reason using just target_link_libraries with melano_time
+    # fails to resolve some symbols defined and used in melano_time o_O
+    set(COMMON_LIBRARIES
+        -L"$<TARGET_FILE_DIR:httpony>" -L"$<TARGET_FILE_DIR:melano_time>" -lhttpony -lmelano_stringutils -lmelano_time
+        # Repeated as targets to have dependencies
+        httpony melano_stringutils melano_time
+    )
 
     melanotest(test_uri)
     target_link_libraries(test_uri ${COMMON_LIBRARIES})

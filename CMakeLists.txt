@@ -80,5 +80,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(LCOV_SOURCE_BASE_DIR "${CMAKE_SOURCE_DIR}")
     set(LCOV_REMOVE_PATTERN "lib/*.cpp" "lib/*.hpp" "test_*.cpp")
     include(testing)
-    add_subdirectory(test)
 endif()
+
+# Tests
+add_subdirectory(test)
