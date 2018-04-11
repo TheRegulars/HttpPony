@@ -439,7 +439,7 @@ BOOST_AUTO_TEST_CASE( test_node_get_value )
     BOOST_CHECK_THROW(node.get_value<bool>(), JsonError);
     BOOST_CHECK_EQUAL(node.get_value<std::string>(), "foo bar");
     BOOST_CHECK_THROW(node.get_value<float>(), JsonError);
-    BOOST_CHECK_EQUAL(std::strcmp(node.get_value<char*>(), "foo bar"), 0);
+    BOOST_CHECK_EQUAL(node.get_value<char*>(), "foo bar");
 }
 
 BOOST_AUTO_TEST_CASE( test_node_get_value_default )
@@ -513,7 +513,7 @@ BOOST_AUTO_TEST_CASE( test_node_get )
     BOOST_CHECK_THROW(node.get<float>("foo.bar"), JsonError);
     BOOST_CHECK_THROW(node.get<int>("foo.bar"), JsonError);
     BOOST_CHECK_THROW(node.get<bool>("foo.bar"), JsonError);
-    BOOST_CHECK_EQUAL(strcmp(node.get<char*>("foo.bar"), "foo"), 0);
+    BOOST_CHECK_EQUAL(node.get<char*>("foo.bar"), "foo");
     BOOST_CHECK_EQUAL(node.get<std::string>("foo.bar"), "foo");
 }
 

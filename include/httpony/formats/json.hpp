@@ -352,7 +352,7 @@ public:
         return iter->second;
     }
 
-// pt
+// pt - sequence
     void clear()
     {
         children_.clear();
@@ -382,6 +382,14 @@ public:
         return children_.back();
     }
 
+    iterator begin() { return children_.begin(); }
+    const_iterator cbegin() const { return children_.begin(); }
+    const_iterator begin() const { return children_.begin(); }
+    iterator end() { return children_.end(); }
+    const_iterator cend() const { return children_.end(); }
+    const_iterator end() const { return children_.end(); }
+
+// pt
     size_type count(const key_type & key) const
     {
         size_type count = 0;
@@ -420,6 +428,22 @@ public:
         const JsonNode* child = find_child_ptr(path);
         if ( !child )
             return default_child;
+        return *child;
+    }
+
+    melanolib::Optional<JsonNode&> get_child_optional(const path_type& path)
+    {
+        const JsonNode* child = find_child_ptr(path);
+        if ( !child )
+            return {};
+        return const_cast<JsonNode&>(*child);
+    }
+
+    melanolib::Optional<const JsonNode&> get_child_optional(const path_type& path) const
+    {
+        const JsonNode* child = find_child_ptr(path);
+        if ( !child )
+            return {};
         return *child;
     }
 
@@ -491,10 +515,10 @@ public:
             std::remove_cv_t<std::remove_pointer_t<std::decay_t<Type>>>,
             char
         >::value,
-        const char*
+        std::string
     > get_value() const
     {
-        return value_string().c_str();
+        return value_string();
     }
 
     template<class Type>
