@@ -98,6 +98,9 @@ namespace detail {
         for ( int i = 0; i < indent * depth; i++ )
             out.put(' ');
     }
+
+    template<class T>
+    using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 } // namespace detail
 
 /**
@@ -134,10 +137,15 @@ public:
     using container = std::list<value_type>;
     using iterator = container::iterator;
     using const_iterator = container::const_iterator;
+    using size_type = std::size_t;
 
     JsonNode() : type_(Object) {}
     explicit JsonNode(std::nullptr_t) : type_(Null) {}
     explicit JsonNode(long value)
+      : type_(Number),
+        value_(melanolib::string::to_string(value))
+    {}
+    explicit JsonNode(double value)
       : type_(Number),
         value_(melanolib::string::to_string(value))
     {}
@@ -219,6 +227,13 @@ public:
         if ( type_ != Number )
             throw JsonError("", 0, "Not a number value");
         return melanolib::string::to_int(value_);
+    }
+
+    double value_float() const
+    {
+        if ( type_ != Number )
+            throw JsonError("", 0, "Not a number value");
+        return std::stod(value_);
     }
 
     void set_value_bool(long value)
@@ -345,20 +360,51 @@ public:
         type_ = Object;
     }
 
-    std::size_t size() const
+    size_type size() const
     {
         return children_.size();
+    }
+
+    void push_back(const value_type& pair)
+    {
+        if ( type_ != Object && type_ != Array )
+            throw JsonError("", 0, "Not an object");
+        children_.push_back(pair);
+    }
+
+    value_type& back()
+    {
+        return children_.back();
+    }
+
+    const value_type& back() const
+    {
+        return children_.back();
+    }
+
+    size_type count(const key_type & key) const
+    {
+        size_type count = 0;
+        for ( const auto& pair : children_ )
+            if ( pair.first == key )
+                count++;
+        return count;
     }
 
     JsonNode& get_child(const path_type& path)
     {
         const JsonNode* child = find_child_ptr(path);
+        if ( !child )
+            throw JsonError("", 0, "Node not found");
         return const_cast<JsonNode&>(*child);
     }
 
     const JsonNode& get_child(const path_type& path) const
     {
-        return *find_child_ptr(path);
+        const JsonNode* child = find_child_ptr(path);
+        if ( !child )
+            throw JsonError("", 0, "Node not found");
+        return *child;
     }
 
     JsonNode& get_child(const path_type& path, JsonNode& default_child)
@@ -410,6 +456,96 @@ public:
         return put_child(path, JsonNode(std::forward<T>(value)));
     }
 
+    template<class Type>
+    std::enable_if_t<
+        std::is_integral<detail::remove_cvref_t<Type>>::value
+        && !std::is_same<detail::remove_cvref_t<Type>, bool>::value,
+        detail::remove_cvref_t<Type>
+    > get_value() const
+    {
+        return value_int();
+    }
+
+    template<class Type>
+    std::enable_if_t<
+        std::is_floating_point<detail::remove_cvref_t<Type>>::value,
+        detail::remove_cvref_t<Type>
+    > get_value() const
+    {
+        return value_float();
+    }
+
+    template<class Type>
+    std::enable_if_t<
+        std::is_same<detail::remove_cvref_t<Type>, bool>::value,
+        bool
+    > get_value() const
+    {
+        return value_bool();
+    }
+
+    template<class Type>
+    std::enable_if_t<
+        std::is_pointer<std::decay_t<Type>>::value &&
+        std::is_same<
+            std::remove_cv_t<std::remove_pointer_t<std::decay_t<Type>>>,
+            char
+        >::value,
+        const char*
+    > get_value() const
+    {
+        return value_string().c_str();
+    }
+
+    template<class Type>
+    std::enable_if_t<
+        std::is_convertible<std::string, detail::remove_cvref_t<Type>>::value
+        && !std::is_same<
+             detail::remove_cvref_t<Type>,
+             std::string
+        >::value,
+        detail::remove_cvref_t<Type>
+    > get_value() const
+    {
+        return value_string();
+    }
+
+    template<class Type>
+    std::enable_if_t<
+        std::is_same<detail::remove_cvref_t<Type>, std::string>::value,
+        const std::string&
+    > get_value() const
+    {
+        return value_string();
+    }
+
+    template<class Type>
+    auto get_value(Type&& default_value) const -> decltype(get_value<Type>())
+    {
+        try {
+            return get_value<Type>();
+        } catch (const JsonError&) {
+            return std::forward<Type>(default_value);
+        }
+    }
+
+
+    template<class Type>
+    auto get(const path_type& path) const -> decltype(get_value<Type>())
+    {
+        return get_child(path).get_value<Type>();
+    }
+
+    template<class Type>
+    auto get(const path_type& path, Type&& default_value) const -> decltype(get_value<Type>())
+    {
+        try {
+            return get_child(path).get_value<Type>();
+        } catch (const JsonError&) {
+            return std::forward<Type>(default_value);
+        }
+    }
+
 private:
     const JsonNode* find_child_ptr(const path_type& path) const
     {
@@ -457,10 +593,11 @@ private:
  * it reads arrays element with their numeric index, is a bit forgiving
  * about syntax errors and allows simple unquoted strings
  */
-class JsonParser
+template<class TreeT>
+class JsonParserGeneric
 {
 public:
-    using Tree = boost::property_tree::ptree;
+    using Tree = TreeT;
 
     /**
      * \brief Parse the stream
@@ -965,6 +1102,9 @@ private:
     bool nothrow = false;       ///< If true, don't throw
     bool error_flag = false;    ///< If true, there has been an error
 };
+
+using JsonParserPtree = JsonParserGeneric<boost::property_tree::ptree>;
+using JsonParser = JsonParserGeneric<JsonNode>;
 
 } // namespace json
 } // namespace httpony
