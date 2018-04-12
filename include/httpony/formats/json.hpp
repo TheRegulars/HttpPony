@@ -632,7 +632,7 @@ private:
 };
 
 namespace detail{
-    template<> void tree_node_to_array(JsonNode& node)
+    template<> inline void tree_node_to_array(JsonNode& node)
     {
         node.to_array();
     }
