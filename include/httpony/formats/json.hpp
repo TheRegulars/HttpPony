@@ -101,6 +101,11 @@ namespace detail {
 
     template<class T>
     using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+
+
+    template<class T> void tree_node_to_array(T& node){}
+
 } // namespace detail
 
 /**
@@ -266,6 +271,12 @@ public:
     {
         type_ = String;
         value_ = value;
+    }
+
+    void to_array()
+    {
+        type_ = Array;
+        value_.clear();
     }
 
     void format(std::ostream& out, int indent = 0, int indent_depth = 0 ) const
@@ -570,6 +581,16 @@ public:
         }
     }
 
+    template<class Type>
+    auto get_optional(const path_type& path) const -> melanolib::Optional<decltype(get_value<Type>())>
+    {
+        try {
+            return get_child(path).get_value<Type>();
+        } catch (const JsonError&) {
+            return {};
+        }
+    }
+
 private:
     const JsonNode* find_child_ptr(const path_type& path) const
     {
@@ -597,7 +618,7 @@ private:
         for ( const auto& piece : pieces )
         {
             parent = &(*parent)[piece];
-            if ( parent->type_ != Object )
+            if ( parent->type_ != Object && parent->type_ != Array )
                 throw JsonError("", 0, "Not an object");
         }
 
@@ -609,6 +630,13 @@ private:
     std::string value_;
     container children_;
 };
+
+namespace detail{
+    template<> void tree_node_to_array(JsonNode& node)
+    {
+        node.to_array();
+    }
+} // namespace detail
 
 /**
  * \brief Class that populates a property tree from a JSON in a stream
@@ -814,7 +842,9 @@ private:
             error("Expected array");
 
         if ( !context.empty() )
-            ptree.put_child(context_pos(), {});
+            detail::tree_node_to_array(ptree.put_child(context_pos(), {}));
+        else
+            detail::tree_node_to_array(ptree);
 
         context_push_array();
         parse_json_array_elements();

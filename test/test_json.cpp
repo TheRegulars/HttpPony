@@ -189,6 +189,172 @@ BOOST_AUTO_TEST_CASE( test_ptree_comments )
 }
 
 
+BOOST_AUTO_TEST_CASE( test_node_array )
+{
+    JsonParser parser;
+    parser.throws(false);
+    JsonParser::Tree tree;
+
+    tree = parser.parse_string("[1, 2, 3]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.type() == JsonNode::Array );
+    BOOST_CHECK( tree.get<int>("0") == 1 );
+    BOOST_CHECK( tree.get<int>("1") == 2 );
+    BOOST_CHECK( tree.get<int>("2") == 3 );
+
+    // not valid json, but it shouldn't have issues
+    tree = parser.parse_string("[4, 5, 6,]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<int>("0") == 4 );
+    BOOST_CHECK( tree.get<int>("1") == 5 );
+    BOOST_CHECK( tree.get<int>("2") == 6 );
+
+    // errors leave the parser in a consistent state
+    tree = parser.parse_string("[7, 8, 9");
+    BOOST_CHECK( parser.error() );
+    BOOST_CHECK( tree.get<int>("0") == 7 );
+    BOOST_CHECK( tree.get<int>("1") == 8 );
+    BOOST_CHECK( tree.get<int>("2") == 9 );
+
+    tree = parser.parse_string("[]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( !tree.get_optional<std::string>("0") );
+
+    tree = parser.parse_string("[[0,1],[2]]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<int>("0.0") == 0 );
+    BOOST_CHECK( tree.get<int>("0.1") == 1 );
+    BOOST_CHECK( tree.get<int>("1.0") == 2 );
+
+}
+
+BOOST_AUTO_TEST_CASE( test_node_object )
+{
+    JsonParser parser;
+    parser.throws(false);
+    JsonParser::Tree tree;
+
+    tree = parser.parse_string("{}");
+    BOOST_CHECK( !parser.error() );
+
+    tree = parser.parse_string(R"({foo: "bar"})");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("foo") == "bar" );
+
+    tree = parser.parse_string(R"({"foo": "bar"})");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("foo") == "bar" );
+
+    tree = parser.parse_string(R"({foo: "bar", hello: "world"})");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("foo") == "bar" );
+    BOOST_CHECK( tree.get<std::string>("hello") == "world" );
+
+    tree = parser.parse_string(R"({foo: "bar", hello: "world",})");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("foo") == "bar" );
+    BOOST_CHECK( tree.get<std::string>("hello") == "world" );
+
+    tree = parser.parse_string(R"({foo: {hello: "world"}})");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("foo.hello") == "world" );
+
+    tree = parser.parse_string(R"({foo: {hello: "bar")");
+    BOOST_CHECK( parser.error() );
+    BOOST_CHECK( tree.get<std::string>("foo.hello") == "bar" );
+}
+
+BOOST_AUTO_TEST_CASE( test_node_values )
+{
+    JsonParser parser;
+    parser.throws(false);
+    JsonParser::Tree tree;
+
+    tree = parser.parse_string("[123]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<int>("0") == 123 );
+
+    tree = parser.parse_string("[12.3]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( int(tree.get<double>("0")*10) == 123 );
+
+    tree = parser.parse_string("[true, false]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<bool>("0") == true );
+    BOOST_CHECK( tree.get<bool>("1") == false );
+
+    tree = parser.parse_string("[null]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( !tree.get_optional<std::string>("0") );
+
+    tree = parser.parse_string("[foo]");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "foo" );
+}
+
+BOOST_AUTO_TEST_CASE( test_node_string )
+{
+    JsonParser parser;
+    parser.throws(false);
+    JsonParser::Tree tree;
+
+    tree = parser.parse_string(R"(["123"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "123" );
+
+    tree = parser.parse_string(R"(["12\"3"])"); // "
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "12\"3" );
+
+    tree = parser.parse_string(R"(["\b\f\r\t\n\\\"\/"])"); // "
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "\b\f\r\t\n\\\"/" );
+
+    tree = parser.parse_string(R"(["\u0020"])"); // "
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == " " );
+
+    tree = parser.parse_string(R"(["\u00E6"])"); // "
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "æ" );
+}
+
+BOOST_AUTO_TEST_CASE( test_node_comments )
+{
+    JsonParser parser;
+    parser.throws(false);
+    JsonParser::Tree tree;
+
+    tree = parser.parse_string(R"([   "123"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "123" );
+
+    tree = parser.parse_string(R"( [
+        "123"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "123" );
+
+    tree = parser.parse_string(R"([// hello
+        "123"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "123" );
+
+    tree = parser.parse_string(R"([/*hello*/"123"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "123" );
+
+    tree = parser.parse_string(R"([ /*hello
+    world*/
+    "123"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "123" );
+
+    tree = parser.parse_string(R"([/**/"123"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "123" );
+}
+
+
 BOOST_AUTO_TEST_CASE( test_node_value_ctor )
 {
     JsonNode empty;
@@ -381,6 +547,8 @@ BOOST_AUTO_TEST_CASE( test_node_to_json_pretty )
     JsonNode node;
     node.put("foo.bar", 123);
     node.put("foo.baz", true);
+    node.put("bar.0", 1);
+    node["bar"].to_array();
     std::ostringstream ss;
     node.format(ss, 2);
     BOOST_CHECK_EQUAL(ss.str(),
@@ -388,7 +556,10 @@ R"({
   "foo": {
     "bar": 123,
     "baz": true
-  }
+  },
+  "bar": [
+    1
+  ]
 })");
 
 }
