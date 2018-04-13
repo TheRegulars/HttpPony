@@ -363,6 +363,15 @@ public:
         return iter->second;
     }
 
+    std::string get_raw(const path_type& path, const std::string& default_value) const
+    {
+        try {
+            return get_child(path).raw_value();
+        } catch (const JsonError&) {
+            return default_value;
+        }
+    }
+
 // pt - sequence
     void clear()
     {
