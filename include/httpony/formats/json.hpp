@@ -944,6 +944,8 @@ private:
     {
         char c = get_skipws();
         std::string r;
+        uint16_t surrogate = 0;
+
         if ( c == '\"' )
         {
             while ( true )
@@ -966,7 +968,19 @@ private:
                             if ( !std::isxdigit(hex[i]) )
                                 hex[i] = '0';
                         }
-                        r += melanolib::string::Utf8Parser::encode(melanolib::string::to_uint(hex, 16));
+
+                        uint32_t unipoint = melanolib::string::to_uint(hex, 16);
+                        if ( surrogate )
+                        {
+                            if ( melanolib::string::Utf8Parser::is_low_surrogate(unipoint) )
+                                unipoint = melanolib::string::Utf8Parser::combine_surrogates(surrogate, unipoint);
+                            surrogate = 0;
+                        }
+
+                        if ( melanolib::string::Utf8Parser::is_high_surrogate(unipoint) )
+                            surrogate = unipoint;
+                        else
+                            r += melanolib::string::Utf8Parser::encode(unipoint);
 
                         continue;
                     }
@@ -974,6 +988,8 @@ private:
                     if ( !detail::escapeable(c) )
                         r += '\\';
                 }
+
+                surrogate = 0;
 
                 r += c;
 

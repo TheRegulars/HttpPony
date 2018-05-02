@@ -731,3 +731,16 @@ BOOST_AUTO_TEST_CASE( test_node_get_default )
     BOOST_CHECK_EQUAL(node.get("foo.bar", "foo bar"), std::string("foo"));
     BOOST_CHECK_EQUAL(node.get("foo.bar", std::string("foo bar")), "foo");
 }
+
+
+
+BOOST_AUTO_TEST_CASE( test_unicode )
+{
+    JsonParser parser;
+    parser.throws(false);
+    JsonParser::Tree tree;
+
+    tree = parser.parse_string(R"(["\ud83d\udd25"])");
+    BOOST_CHECK( !parser.error() );
+    BOOST_CHECK( tree.get<std::string>("0") == "\xF0\x9F\x94\xA5" );
+}
