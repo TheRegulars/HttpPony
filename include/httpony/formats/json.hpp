@@ -67,7 +67,23 @@ namespace detail {
         }
     }
 
-    inline void quote(const std::string& str, std::ostream& out)
+    inline void print_uniescape(std::ostream& out, uint32_t point, bool unicode_surrogates)
+    {
+        out << "\\u" << std::hex << std::setw(4) << std::setfill('0');
+        if ( !unicode_surrogates || !melanolib::string::Utf8Parser::can_split_surrogates(point) )
+        {
+            out << point;
+        }
+        else
+        {
+            auto p = melanolib::string::Utf8Parser::split_surrogates(point);
+            out << p.first << "\\u" << std::setw(4) << p.second;
+        }
+        out << std::dec;
+    }
+
+    inline void quote(const std::string& str, std::ostream& out,
+                      bool unicode_surrogates)
     {
         melanolib::string::Utf8Parser parser(str);
         out << '"';
@@ -84,7 +100,7 @@ namespace detail {
             }
             else
             {
-                out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << unicode.point() << std::dec;
+                print_uniescape(out, unicode.point(), unicode_surrogates);
             }
         }
         out << '"';
@@ -279,7 +295,8 @@ public:
         value_.clear();
     }
 
-    void format(std::ostream& out, int indent = 0, int indent_depth = 0 ) const
+    void format(std::ostream& out, int indent = 0, int indent_depth = 0,
+                bool unicode_surrogates = false ) const
     {
         switch ( type_ )
         {
@@ -287,7 +304,7 @@ public:
                 out << "null";
                 break;
             case String:
-                detail::quote(value_, out);
+                detail::quote(value_, out, unicode_surrogates);
                 break;
             case Number:
             case Boolean:
@@ -301,11 +318,11 @@ public:
                 {
                     if ( n++ ) out << ',';
                     detail::add_indent(out, indent, (indent_depth + 1));
-                    detail::quote(pair.first, out);
+                    detail::quote(pair.first, out, unicode_surrogates);
                     out << ':';
                     if ( indent )
                         out << ' ';
-                    pair.second.format(out, indent, indent_depth + 1);
+                    pair.second.format(out, indent, indent_depth + 1, unicode_surrogates);
                 }
                 detail::add_indent(out, indent, indent_depth);
                 out << '}';
@@ -319,7 +336,7 @@ public:
                 {
                     detail::add_indent(out, indent, (indent_depth + 1));
                     if ( n++ ) out << ',';
-                    pair.second.format(out);
+                    pair.second.format(out, indent, indent_depth, unicode_surrogates);
                 }
                 detail::add_indent(out, indent, indent_depth);
                 out << ']';

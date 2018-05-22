@@ -732,9 +732,7 @@ BOOST_AUTO_TEST_CASE( test_node_get_default )
     BOOST_CHECK_EQUAL(node.get("foo.bar", std::string("foo bar")), "foo");
 }
 
-
-
-BOOST_AUTO_TEST_CASE( test_unicode )
+BOOST_AUTO_TEST_CASE( test_unicode_surrogates_decode )
 {
     JsonParser parser;
     parser.throws(false);
@@ -744,3 +742,24 @@ BOOST_AUTO_TEST_CASE( test_unicode )
     BOOST_CHECK( !parser.error() );
     BOOST_CHECK( tree.get<std::string>("0") == "\xF0\x9F\x94\xA5" );
 }
+
+BOOST_AUTO_TEST_CASE( test_unicode_no_surrogates_encode )
+{
+    JsonNode tree;
+    tree.to_array();
+    tree.put("0", "\xF0\x9F\x94\xA5");
+    std::ostringstream out;
+    tree.format(out);
+    BOOST_CHECK_EQUAL( out.str(), R"(["\u1f525"])" );
+}
+
+BOOST_AUTO_TEST_CASE( test_unicode_surrogates_encode )
+{
+    JsonNode tree;
+    tree.to_array();
+    tree.put("0", "\xF0\x9F\x94\xA5");
+    std::ostringstream out;
+    tree.format(out, 0, 0, true);
+    BOOST_CHECK_EQUAL( out.str(), R"(["\ud83d\udd25"])" );
+}
+
