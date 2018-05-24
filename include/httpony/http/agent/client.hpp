@@ -259,11 +259,7 @@ public:
                 connection.socket().process_async();
             lock.lock();
 
-            std::unique_lock<std::mutex> old_lock(old_requests_mutex);
-            for ( auto it_conn = items.begin(); it_conn != items.end(); )
-            {
-                it_conn = remove_old(it_conn);
-            }
+            remove_all_old();
         }
     }
 
@@ -277,6 +273,16 @@ public:
         request.connection = ClientT::create_connection(request.uri);
 
         std::unique_lock<std::mutex> lock(mutex);
+        remove_all_old();
+
+        // Force close old connections
+        if ( !items.empty() && items.size() >= max_requests )
+        {
+            Request* oldest = &items.front();
+            oldest->connection.close();
+            old_requests.push_back(oldest);
+        }
+
         items.emplace_back(std::move(request));
         auto& item = items.back();
         lock.unlock();
@@ -325,7 +331,6 @@ public:
     }
 
 private:
-
     io::BasicClient& basic_client()
     {
         return this->_basic_client;
@@ -345,6 +350,18 @@ private:
         old_requests.push_back(request);
         lock.unlock();
         condition.notify_one();
+    }
+
+    /**
+     * \locks old_requests_mutex, requires lock on mutex by the caller
+     */
+    void remove_all_old()
+    {
+        std::unique_lock<std::mutex> old_lock(old_requests_mutex);
+        for ( auto it_conn = items.begin(); it_conn != items.end(); )
+        {
+            it_conn = remove_old(it_conn);
+        }
     }
 
     item_iterator remove_old(item_iterator iter)
