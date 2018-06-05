@@ -30,7 +30,7 @@ Mattia Basaglia <mattia.basaglia@gmail.com>
 Sources
 -------
 
-https://github.com/mbasaglia/HttPony
+https://gitlab.com/mattia.basaglia/HttPony
 
 
 Installing
@@ -39,7 +39,7 @@ Installing
 Dependencies
 ------------
 
-* [Melanolib](https://github.com/mbasaglia/Melanolib) (Included as a sub-module)
+* [Melanolib](https://gitlab.com/mattia.basaglia/Melanolib) (Included as a sub-module)
 * [Boost ASIO](http://boost.org)
 
 If you want to use the SSL capabilties, you need to be able to link OpenSSL to

@@ -1,6 +1,6 @@
 [submodule "lib/Melanolib"]
 	path = lib/Melanolib
-	url = https://github.com/mbasaglia/Melanolib.git
+	url = https://gitlab.com/mattia.basaglia/Melanolib.git
 [submodule "cmake"]
 	path = cmake
-	url = https://github.com/mbasaglia/CMake-Lib.git
+	url = https://gitlab.com/mattia.basaglia/CMake-Lib.git

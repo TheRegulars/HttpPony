@@ -31,7 +31,7 @@
  *
  * \subsection Dependencies
  * \par Libraries
- *  * [Melanolib](https://github.com/mbasaglia/Melanolib) (Included as a sub-module)
+ *  * [Melanolib](https://gitlab.com/mattia.basaglia/Melanolib) (Included as a sub-module)
  *  * [Boost ASIO](http://boost.org)
  *
  * If you want SSL support you need to link your executable against
